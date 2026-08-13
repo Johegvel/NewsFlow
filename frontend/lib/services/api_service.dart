@@ -6,6 +6,8 @@ import '../models/community.dart';
 import '../models/post.dart';
 import '../models/comment.dart';
 import '../models/reaction.dart';
+import '../models/report.dart';
+import '../models/saved_post.dart';
 
 class ApiService {
   static const String baseUrl = 'http://127.0.0.1:3000/api/v1';
@@ -142,5 +144,107 @@ class ApiService {
     }
 
     return Post.fromJson(jsonDecode(response.body));
+  }
+
+  Future<void> createReport(int postId, String reason) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/posts/$postId/reports'),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'report': {
+          'user_id': 1,
+          'reason': reason,
+        },
+      }),
+    );
+
+    if (response.statusCode != 201) {
+      throw Exception('No se pudo enviar el reporte');
+    }
+  }
+
+  Future<List<Report>> fetchReports() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/reports'),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('No se pudieron cargar los reportes');
+    }
+
+    final data = jsonDecode(response.body) as List;
+
+    return data
+        .map((item) => Report.fromJson(item))
+        .toList();
+  }
+
+  Future<Report> updateReport(
+    int reportId,
+    String status,
+  ) async {
+    final response = await http.patch(
+      Uri.parse('$baseUrl/reports/$reportId'),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'report': {
+          'status': status,
+        },
+      }),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('No se pudo actualizar el reporte');
+    }
+
+    return Report.fromJson(jsonDecode(response.body));
+  }
+
+  Future<void> savePost(int postId) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/posts/$postId/saved_posts'),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'saved_post': {
+          'user_id': 1,
+        },
+      }),
+    );
+
+    if (response.statusCode != 201 && response.statusCode != 200) {
+      throw Exception('No se pudo guardar la publicación');
+    }
+  }
+
+  Future<List<SavedPost>> fetchSavedPosts() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/users/1/saved_posts'),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('No se pudieron cargar las publicaciones guardadas');
+    }
+
+    final data = jsonDecode(response.body) as List;
+
+    return data
+        .map((item) => SavedPost.fromJson(item))
+        .toList();
+  }
+
+  Future<void> deleteSavedPost(int savedPostId) async {
+    final response = await http.delete(
+      Uri.parse('$baseUrl/saved_posts/$savedPostId'),
+    );
+
+    if (response.statusCode != 204) {
+      throw Exception('No se pudo eliminar la publicación guardada');
+    }
   }
 }

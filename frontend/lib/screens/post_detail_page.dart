@@ -23,6 +23,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
   late Future<List<Comment>> commentsFuture;
   bool sendingComment = false;
   bool reacting = false;
+  bool savingPost = false;
 
   @override
   void initState() {
@@ -116,6 +117,97 @@ class _PostDetailPageState extends State<PostDetailPage> {
     }
   }
 
+  Future<void> reportPost() async {
+    final controller = TextEditingController();
+
+    final reason = await showDialog<String>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Reportar publicación'),
+          content: TextField(
+            controller: controller,
+            maxLines: 4,
+            decoration: const InputDecoration(
+              hintText: 'Indica el motivo del reporte',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancelar'),
+            ),
+            FilledButton(
+              onPressed: () {
+                Navigator.pop(context, controller.text.trim());
+              },
+              child: const Text('Enviar'),
+            ),
+          ],
+        );
+      },
+    );
+
+    controller.dispose();
+
+    if (!mounted || reason == null || reason.isEmpty) {
+      return;
+    }
+
+    try {
+      await apiService.createReport(widget.post.id, reason);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Reporte enviado correctamente'),
+          ),
+        );
+      }
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $error')),
+        );
+      }
+    }
+  }
+
+  Future<void> saveCurrentPost() async {
+    if (savingPost) {
+      return;
+    }
+
+    setState(() {
+      savingPost = true;
+    });
+
+    try {
+      await apiService.savePost(widget.post.id);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Publicación guardada correctamente'),
+          ),
+        );
+      }
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $error')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          savingPost = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final post = widget.post;
@@ -123,6 +215,26 @@ class _PostDetailPageState extends State<PostDetailPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Detalle de publicación'),
+        actions: [
+          IconButton(
+            onPressed: savingPost ? null : saveCurrentPost,
+            icon: savingPost
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                    ),
+                  )
+                : const Icon(Icons.bookmark_border),
+            tooltip: 'Guardar publicación',
+          ),
+          IconButton(
+            onPressed: reportPost,
+            icon: const Icon(Icons.flag_outlined),
+            tooltip: 'Reportar publicación',
+          ),
+        ],
       ),
       body: Center(
         child: ConstrainedBox(

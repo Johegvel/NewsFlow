@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import 'post_detail_page.dart';
 import 'create_post_page.dart';
+import 'moderation_page.dart';
+import 'saved_posts_page.dart';
 import '../models/community.dart';
 import '../models/post.dart';
 import '../services/api_service.dart';
@@ -66,6 +68,30 @@ class _HomePageState extends State<HomePage> {
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         actions: [
+          IconButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const SavedPostsPage(),
+                ),
+              );
+            },
+            icon: const Icon(Icons.bookmark),
+            tooltip: 'Publicaciones guardadas',
+          ),
+          IconButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const ModerationPage(),
+                ),
+              );
+            },
+            icon: const Icon(Icons.admin_panel_settings),
+            tooltip: 'Moderación',
+          ),
           IconButton(
             onPressed: () async {
               final communities = await communitiesFuture;
