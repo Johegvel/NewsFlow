@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'post_detail_page.dart';
+import 'create_post_page.dart';
 import '../models/community.dart';
 import '../models/post.dart';
 import '../services/api_service.dart';
@@ -65,6 +66,30 @@ class _HomePageState extends State<HomePage> {
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         actions: [
+          IconButton(
+            onPressed: () async {
+              final communities = await communitiesFuture;
+
+              if (!context.mounted) return;
+
+              final created = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => CreatePostPage(
+                    communities: communities,
+                  ),
+                ),
+              );
+
+              if (created == true) {
+                setState(() {
+                  loadData();
+                });
+              }
+            },
+            icon: const Icon(Icons.add),
+            tooltip: 'Nueva publicación',
+          ),
           IconButton(
             onPressed: refreshData,
             icon: const Icon(Icons.refresh),

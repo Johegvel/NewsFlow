@@ -114,4 +114,33 @@ class ApiService {
 
     return Reaction.fromJson(jsonDecode(response.body));
   }
+
+  Future<Post> createPost({
+    required int communityId,
+    required String title,
+    required String content,
+    required String postType,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/communities/$communityId/posts'),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'post': {
+          'user_id': 1,
+          'title': title,
+          'content': content,
+          'post_type': postType,
+          'status': 'published',
+        },
+      }),
+    );
+
+    if (response.statusCode != 201) {
+      throw Exception('No se pudo crear la publicación');
+    }
+
+    return Post.fromJson(jsonDecode(response.body));
+  }
 }
