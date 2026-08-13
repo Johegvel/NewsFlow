@@ -10,8 +10,19 @@ Rails.application.routes.draw do
         resources :reactions, only: [:index, :create]
         resources :reports, only: [:index, :create]
       end
-
+      
+      resources :reports, only: [:index, :update]
       resources :reactions, only: [:destroy]
+
+      resources :posts, only: [:index, :show, :create] do
+        resources :saved_posts, only: [:create]
+      end
+
+      resources :users, only: [] do
+        resources :saved_posts, only: [:index]
+      end
+
+      resources :saved_posts, only: [:destroy]
     end
   end
 end

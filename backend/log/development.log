@@ -723,3 +723,516 @@ Processing by Api::V1::ReportsController#index as */*
 Completed 200 OK in 15ms (Views: 0.1ms | ActiveRecord: 1.4ms (3 queries, 0 cached) | GC: 0.0ms)
 
 
+Started GET "/api/v1/posts" for 127.0.0.1 at 2026-08-12 20:50:26 -0500
+Started GET "/api/v1/communities" for 127.0.0.1 at 2026-08-12 20:50:26 -0500
+Processing by Api::V1::CommunitiesController#index as */*
+Processing by Api::V1::PostsController#index as */*
+  [1m[36mCommunity Load (1.9ms)[0m  [1m[34mSELECT "communities".* FROM "communities" ORDER BY "communities"."created_at" DESC /*action='index',application='Backend',controller='communities'*/[0m
+  ↳ app/controllers/api/v1/communities_controller.rb:7:in 'Enumerable#map'
+  [1m[36mPost Load (33.0ms)[0m  [1m[34mSELECT "posts".* FROM "posts" ORDER BY "posts"."created_at" DESC /*action='index',application='Backend',controller='posts'*/[0m
+  ↳ app/controllers/api/v1/posts_controller.rb:12:in 'Enumerable#map'
+  [1m[36mPost Count (5.1ms)[0m  [1m[34mSELECT COUNT(*) FROM "posts" WHERE "posts"."community_id" = 3 /*action='index',application='Backend',controller='communities'*/[0m
+  ↳ app/controllers/api/v1/communities_controller.rb:34:in 'Api::V1::CommunitiesController#community_json'
+  [1m[36mUser Load (2.4ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" IN (1, 2) /*action='index',application='Backend',controller='posts'*/[0m
+  ↳ app/controllers/api/v1/posts_controller.rb:12:in 'Enumerable#map'
+  [1m[36mPost Count (1.9ms)[0m  [1m[34mSELECT COUNT(*) FROM "posts" WHERE "posts"."community_id" = 2 /*action='index',application='Backend',controller='communities'*/[0m
+  ↳ app/controllers/api/v1/communities_controller.rb:34:in 'Api::V1::CommunitiesController#community_json'
+  [1m[36mCommunity Load (2.1ms)[0m  [1m[34mSELECT "communities".* FROM "communities" WHERE "communities"."id" IN (1, 3, 2) /*action='index',application='Backend',controller='posts'*/[0m
+  ↳ app/controllers/api/v1/posts_controller.rb:12:in 'Enumerable#map'
+  [1m[36mPost Count (1.4ms)[0m  [1m[34mSELECT COUNT(*) FROM "posts" WHERE "posts"."community_id" = 1 /*action='index',application='Backend',controller='communities'*/[0m
+Completed 200 OK in 55ms (Views: 0.8ms | ActiveRecord: 49.6ms (3 queries, 0 cached) | GC: 0.0ms)
+
+
+  ↳ app/controllers/api/v1/communities_controller.rb:34:in 'Api::V1::CommunitiesController#community_json'
+Completed 200 OK in 103ms (Views: 0.2ms | ActiveRecord: 33.3ms (4 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/api/v1/posts/7/comments" for 127.0.0.1 at 2026-08-12 20:52:50 -0500
+Processing by Api::V1::CommentsController#index as */*
+  Parameters: {"post_id" => "7"}
+  [1m[36mPost Load (0.6ms)[0m  [1m[34mSELECT "posts".* FROM "posts" WHERE "posts"."id" = 7 LIMIT 1 /*action='index',application='Backend',controller='comments'*/[0m
+  ↳ app/controllers/api/v1/comments_controller.rb:29:in 'Api::V1::CommentsController#set_post'
+  [1m[36mComment Load (1.8ms)[0m  [1m[34mSELECT "comments".* FROM "comments" WHERE "comments"."post_id" = 7 ORDER BY "comments"."created_at" ASC /*action='index',application='Backend',controller='comments'*/[0m
+  ↳ app/controllers/api/v1/comments_controller.rb:11:in 'Enumerable#map'
+Completed 200 OK in 13ms (Views: 0.1ms | ActiveRecord: 4.6ms (2 queries, 0 cached) | GC: 0.0ms)
+
+
+Started POST "/api/v1/posts/7/reports" for 127.0.0.1 at 2026-08-12 20:53:01 -0500
+Processing by Api::V1::ReportsController#create as */*
+  Parameters: {"report" => {"user_id" => 1, "reason" => "Pesimo servicio"}, "post_id" => "7"}
+  [1m[36mPost Load (0.4ms)[0m  [1m[34mSELECT "posts".* FROM "posts" WHERE "posts"."id" = 7 LIMIT 1 /*action='create',application='Backend',controller='reports'*/[0m
+  ↳ app/controllers/api/v1/reports_controller.rb:29:in 'Api::V1::ReportsController#set_post'
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN /*action='create',application='Backend',controller='reports'*/[0m
+  ↳ app/controllers/api/v1/reports_controller.rb:17:in 'Api::V1::ReportsController#create'
+  [1m[36mUser Load (6.5ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = 1 LIMIT 1 /*action='create',application='Backend',controller='reports'*/[0m
+  ↳ app/controllers/api/v1/reports_controller.rb:17:in 'Api::V1::ReportsController#create'
+  [1m[36mReport Create (2.7ms)[0m  [1m[32mINSERT INTO "reports" ("user_id", "post_id", "reason", "status", "reviewed_at", "created_at", "updated_at") VALUES (1, 7, 'Pesimo servicio', 0, NULL, '2026-08-13 01:53:01.616997', '2026-08-13 01:53:01.616997') RETURNING "id" /*action='create',application='Backend',controller='reports'*/[0m
+  ↳ app/controllers/api/v1/reports_controller.rb:17:in 'Api::V1::ReportsController#create'
+  [1m[36mTRANSACTION (1.0ms)[0m  [1m[35mCOMMIT /*action='create',application='Backend',controller='reports'*/[0m
+  ↳ app/controllers/api/v1/reports_controller.rb:17:in 'Api::V1::ReportsController#create'
+Completed 201 Created in 24ms (Views: 0.3ms | ActiveRecord: 10.7ms (3 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/api/v1/reports" for 127.0.0.1 at 2026-08-12 21:00:01 -0500
+Processing by Api::V1::ReportsController#index as */*
+Completed 404 Not Found in 20ms (ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+  
+ActiveRecord::RecordNotFound (Couldn't find Post without an ID):
+  
+app/controllers/api/v1/reports_controller.rb:51:in 'Api::V1::ReportsController#set_post'
+Started GET "/api/v1/reports" for 127.0.0.1 at 2026-08-12 21:00:47 -0500
+Processing by Api::V1::ReportsController#index as */*
+Completed 404 Not Found in 7ms (ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+  
+ActiveRecord::RecordNotFound (Couldn't find Post without an ID):
+  
+app/controllers/api/v1/reports_controller.rb:51:in 'Api::V1::ReportsController#set_post'
+Started GET "/api/v1/reports" for 127.0.0.1 at 2026-08-12 21:00:52 -0500
+Processing by Api::V1::ReportsController#index as */*
+Completed 404 Not Found in 0ms (ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+  
+ActiveRecord::RecordNotFound (Couldn't find Post without an ID):
+  
+app/controllers/api/v1/reports_controller.rb:51:in 'Api::V1::ReportsController#set_post'
+Started GET "/api/v1/posts" for 127.0.0.1 at 2026-08-12 21:02:15 -0500
+Started GET "/api/v1/communities" for 127.0.0.1 at 2026-08-12 21:02:15 -0500
+Processing by Api::V1::PostsController#index as */*
+Processing by Api::V1::CommunitiesController#index as */*
+  [1m[36mPost Load (48.0ms)[0m  [1m[34mSELECT "posts".* FROM "posts" ORDER BY "posts"."created_at" DESC /*action='index',application='Backend',controller='posts'*/[0m
+  ↳ app/controllers/api/v1/posts_controller.rb:12:in 'Enumerable#map'
+  [1m[36mUser Load (1.3ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" IN (1, 2) /*action='index',application='Backend',controller='posts'*/[0m
+  ↳ app/controllers/api/v1/posts_controller.rb:12:in 'Enumerable#map'
+  [1m[36mCommunity Load (0.6ms)[0m  [1m[34mSELECT "communities".* FROM "communities" WHERE "communities"."id" IN (1, 3, 2) /*action='index',application='Backend',controller='posts'*/[0m
+  ↳ app/controllers/api/v1/posts_controller.rb:12:in 'Enumerable#map'
+Completed 200 OK in 98ms (Views: 1.0ms | ActiveRecord: 75.3ms (3 queries, 0 cached) | GC: 0.4ms)
+
+
+  [1m[36mCommunity Load (49.2ms)[0m  [1m[34mSELECT "communities".* FROM "communities" ORDER BY "communities"."created_at" DESC /*action='index',application='Backend',controller='communities'*/[0m
+  ↳ app/controllers/api/v1/communities_controller.rb:7:in 'Enumerable#map'
+  [1m[36mPost Count (0.7ms)[0m  [1m[34mSELECT COUNT(*) FROM "posts" WHERE "posts"."community_id" = 3 /*action='index',application='Backend',controller='communities'*/[0m
+  ↳ app/controllers/api/v1/communities_controller.rb:34:in 'Api::V1::CommunitiesController#community_json'
+  [1m[36mPost Count (0.2ms)[0m  [1m[34mSELECT COUNT(*) FROM "posts" WHERE "posts"."community_id" = 2 /*action='index',application='Backend',controller='communities'*/[0m
+  ↳ app/controllers/api/v1/communities_controller.rb:34:in 'Api::V1::CommunitiesController#community_json'
+  [1m[36mPost Count (0.2ms)[0m  [1m[34mSELECT COUNT(*) FROM "posts" WHERE "posts"."community_id" = 1 /*action='index',application='Backend',controller='communities'*/[0m
+  ↳ app/controllers/api/v1/communities_controller.rb:34:in 'Api::V1::CommunitiesController#community_json'
+Completed 200 OK in 69ms (Views: 0.1ms | ActiveRecord: 90.0ms (4 queries, 0 cached) | GC: 0.4ms)
+
+
+Started GET "/api/v1/posts/6/comments" for 127.0.0.1 at 2026-08-12 21:02:28 -0500
+Processing by Api::V1::CommentsController#index as */*
+  Parameters: {"post_id" => "6"}
+  [1m[36mPost Load (0.3ms)[0m  [1m[34mSELECT "posts".* FROM "posts" WHERE "posts"."id" = 6 LIMIT 1 /*action='index',application='Backend',controller='comments'*/[0m
+  ↳ app/controllers/api/v1/comments_controller.rb:29:in 'Api::V1::CommentsController#set_post'
+  [1m[36mComment Load (0.7ms)[0m  [1m[34mSELECT "comments".* FROM "comments" WHERE "comments"."post_id" = 6 ORDER BY "comments"."created_at" ASC /*action='index',application='Backend',controller='comments'*/[0m
+  ↳ app/controllers/api/v1/comments_controller.rb:11:in 'Enumerable#map'
+Completed 200 OK in 13ms (Views: 0.1ms | ActiveRecord: 1.1ms (2 queries, 0 cached) | GC: 0.0ms)
+
+
+Started POST "/api/v1/posts/6/reports" for 127.0.0.1 at 2026-08-12 21:02:36 -0500
+Processing by Api::V1::ReportsController#create as */*
+  Parameters: {"report" => {"user_id" => 1, "reason" => "Mala Publicacion"}, "post_id" => "6"}
+  [1m[36mPost Load (0.3ms)[0m  [1m[34mSELECT "posts".* FROM "posts" WHERE "posts"."id" = 6 LIMIT 1 /*action='create',application='Backend',controller='reports'*/[0m
+  ↳ app/controllers/api/v1/reports_controller.rb:51:in 'Api::V1::ReportsController#set_post'
+  [1m[36mTRANSACTION (0.3ms)[0m  [1m[35mBEGIN /*action='create',application='Backend',controller='reports'*/[0m
+  ↳ app/controllers/api/v1/reports_controller.rb:22:in 'Api::V1::ReportsController#create'
+  [1m[36mUser Load (5.2ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = 1 LIMIT 1 /*action='create',application='Backend',controller='reports'*/[0m
+  ↳ app/controllers/api/v1/reports_controller.rb:22:in 'Api::V1::ReportsController#create'
+  [1m[36mReport Create (2.8ms)[0m  [1m[32mINSERT INTO "reports" ("user_id", "post_id", "reason", "status", "reviewed_at", "created_at", "updated_at") VALUES (1, 6, 'Mala Publicacion', 0, NULL, '2026-08-13 02:02:36.986406', '2026-08-13 02:02:36.986406') RETURNING "id" /*action='create',application='Backend',controller='reports'*/[0m
+  ↳ app/controllers/api/v1/reports_controller.rb:22:in 'Api::V1::ReportsController#create'
+  [1m[36mTRANSACTION (0.9ms)[0m  [1m[35mCOMMIT /*action='create',application='Backend',controller='reports'*/[0m
+  ↳ app/controllers/api/v1/reports_controller.rb:22:in 'Api::V1::ReportsController#create'
+Completed 201 Created in 34ms (Views: 0.2ms | ActiveRecord: 9.4ms (3 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/api/v1/posts/5/comments" for 127.0.0.1 at 2026-08-12 21:02:40 -0500
+Processing by Api::V1::CommentsController#index as */*
+  Parameters: {"post_id" => "5"}
+  [1m[36mPost Load (0.3ms)[0m  [1m[34mSELECT "posts".* FROM "posts" WHERE "posts"."id" = 5 LIMIT 1 /*action='index',application='Backend',controller='comments'*/[0m
+  ↳ app/controllers/api/v1/comments_controller.rb:29:in 'Api::V1::CommentsController#set_post'
+  [1m[36mComment Load (0.3ms)[0m  [1m[34mSELECT "comments".* FROM "comments" WHERE "comments"."post_id" = 5 ORDER BY "comments"."created_at" ASC /*action='index',application='Backend',controller='comments'*/[0m
+  ↳ app/controllers/api/v1/comments_controller.rb:11:in 'Enumerable#map'
+Completed 200 OK in 4ms (Views: 0.1ms | ActiveRecord: 0.6ms (2 queries, 0 cached) | GC: 0.0ms)
+
+
+Started POST "/api/v1/posts/5/reports" for 127.0.0.1 at 2026-08-12 21:02:48 -0500
+Processing by Api::V1::ReportsController#create as */*
+  Parameters: {"report" => {"user_id" => 1, "reason" => "Reporte prueba"}, "post_id" => "5"}
+  [1m[36mPost Load (0.3ms)[0m  [1m[34mSELECT "posts".* FROM "posts" WHERE "posts"."id" = 5 LIMIT 1 /*action='create',application='Backend',controller='reports'*/[0m
+  ↳ app/controllers/api/v1/reports_controller.rb:51:in 'Api::V1::ReportsController#set_post'
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN /*action='create',application='Backend',controller='reports'*/[0m
+  ↳ app/controllers/api/v1/reports_controller.rb:22:in 'Api::V1::ReportsController#create'
+  [1m[36mUser Load (2.4ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = 1 LIMIT 1 /*action='create',application='Backend',controller='reports'*/[0m
+  ↳ app/controllers/api/v1/reports_controller.rb:22:in 'Api::V1::ReportsController#create'
+  [1m[36mReport Create (0.5ms)[0m  [1m[32mINSERT INTO "reports" ("user_id", "post_id", "reason", "status", "reviewed_at", "created_at", "updated_at") VALUES (1, 5, 'Reporte prueba', 0, NULL, '2026-08-13 02:02:48.307495', '2026-08-13 02:02:48.307495') RETURNING "id" /*action='create',application='Backend',controller='reports'*/[0m
+  ↳ app/controllers/api/v1/reports_controller.rb:22:in 'Api::V1::ReportsController#create'
+  [1m[36mTRANSACTION (0.4ms)[0m  [1m[35mCOMMIT /*action='create',application='Backend',controller='reports'*/[0m
+  ↳ app/controllers/api/v1/reports_controller.rb:22:in 'Api::V1::ReportsController#create'
+Completed 201 Created in 13ms (Views: 0.1ms | ActiveRecord: 3.8ms (3 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/api/v1/reports" for 127.0.0.1 at 2026-08-12 21:02:57 -0500
+Processing by Api::V1::ReportsController#index as */*
+Completed 404 Not Found in 1ms (ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+  
+ActiveRecord::RecordNotFound (Couldn't find Post without an ID):
+  
+app/controllers/api/v1/reports_controller.rb:51:in 'Api::V1::ReportsController#set_post'
+Started PATCH "/api/v1/reports/1" for 127.0.0.1 at 2026-08-12 21:03:10 -0500
+Processing by Api::V1::ReportsController#update as */*
+  Parameters: {"report" => {"status" => "reviewed"}, "id" => "1"}
+  [1m[36mReport Load (0.5ms)[0m  [1m[34mSELECT "reports".* FROM "reports" WHERE "reports"."id" = 1 LIMIT 1 /*action='update',application='Backend',controller='reports'*/[0m
+  ↳ app/controllers/api/v1/reports_controller.rb:32:in 'Api::V1::ReportsController#update'
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN /*action='update',application='Backend',controller='reports'*/[0m
+  ↳ app/controllers/api/v1/reports_controller.rb:34:in 'Api::V1::ReportsController#update'
+  [1m[36mReport Update (7.0ms)[0m  [1m[33mUPDATE "reports" SET "status" = 1, "reviewed_at" = '2026-08-13 02:03:10.433726', "updated_at" = '2026-08-13 02:03:10.434133' WHERE "reports"."id" = 1 /*action='update',application='Backend',controller='reports'*/[0m
+  ↳ app/controllers/api/v1/reports_controller.rb:34:in 'Api::V1::ReportsController#update'
+  [1m[36mTRANSACTION (0.4ms)[0m  [1m[35mCOMMIT /*action='update',application='Backend',controller='reports'*/[0m
+  ↳ app/controllers/api/v1/reports_controller.rb:34:in 'Api::V1::ReportsController#update'
+  [1m[36mPost Load (0.3ms)[0m  [1m[34mSELECT "posts".* FROM "posts" WHERE "posts"."id" = 1 LIMIT 1 /*action='update',application='Backend',controller='reports'*/[0m
+  ↳ app/controllers/api/v1/reports_controller.rb:66:in 'Api::V1::ReportsController#report_json'
+  [1m[36mUser Load (0.3ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = 1 LIMIT 1 /*action='update',application='Backend',controller='reports'*/[0m
+  ↳ app/controllers/api/v1/reports_controller.rb:70:in 'Api::V1::ReportsController#report_json'
+Completed 200 OK in 24ms (Views: 0.1ms | ActiveRecord: 8.6ms (4 queries, 0 cached) | GC: 3.8ms)
+
+
+Started PATCH "/api/v1/reports/1" for 127.0.0.1 at 2026-08-12 21:03:29 -0500
+Processing by Api::V1::ReportsController#update as */*
+  Parameters: {"report" => {"status" => "action_taken"}, "id" => "1"}
+  [1m[36mReport Load (0.3ms)[0m  [1m[34mSELECT "reports".* FROM "reports" WHERE "reports"."id" = 1 LIMIT 1 /*action='update',application='Backend',controller='reports'*/[0m
+  ↳ app/controllers/api/v1/reports_controller.rb:32:in 'Api::V1::ReportsController#update'
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*action='update',application='Backend',controller='reports'*/[0m
+  ↳ app/controllers/api/v1/reports_controller.rb:34:in 'Api::V1::ReportsController#update'
+  [1m[36mReport Update (2.5ms)[0m  [1m[33mUPDATE "reports" SET "status" = 3, "reviewed_at" = '2026-08-13 02:03:29.629340', "updated_at" = '2026-08-13 02:03:29.629625' WHERE "reports"."id" = 1 /*action='update',application='Backend',controller='reports'*/[0m
+  ↳ app/controllers/api/v1/reports_controller.rb:34:in 'Api::V1::ReportsController#update'
+  [1m[36mTRANSACTION (0.4ms)[0m  [1m[35mCOMMIT /*action='update',application='Backend',controller='reports'*/[0m
+  ↳ app/controllers/api/v1/reports_controller.rb:34:in 'Api::V1::ReportsController#update'
+  [1m[36mPost Load (0.4ms)[0m  [1m[34mSELECT "posts".* FROM "posts" WHERE "posts"."id" = 1 LIMIT 1 /*action='update',application='Backend',controller='reports'*/[0m
+  ↳ app/controllers/api/v1/reports_controller.rb:38:in 'Api::V1::ReportsController#update'
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*action='update',application='Backend',controller='reports'*/[0m
+  ↳ app/controllers/api/v1/reports_controller.rb:38:in 'Api::V1::ReportsController#update'
+  [1m[36mPost Update (2.7ms)[0m  [1m[33mUPDATE "posts" SET "status" = 2, "updated_at" = '2026-08-13 02:03:29.638671' WHERE "posts"."id" = 1 /*action='update',application='Backend',controller='reports'*/[0m
+  ↳ app/controllers/api/v1/reports_controller.rb:38:in 'Api::V1::ReportsController#update'
+  [1m[36mTRANSACTION (0.4ms)[0m  [1m[35mCOMMIT /*action='update',application='Backend',controller='reports'*/[0m
+  ↳ app/controllers/api/v1/reports_controller.rb:38:in 'Api::V1::ReportsController#update'
+  [1m[36mUser Load (0.5ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = 1 LIMIT 1 /*action='update',application='Backend',controller='reports'*/[0m
+  ↳ app/controllers/api/v1/reports_controller.rb:70:in 'Api::V1::ReportsController#report_json'
+Completed 200 OK in 22ms (Views: 0.1ms | ActiveRecord: 7.5ms (5 queries, 0 cached) | GC: 1.0ms)
+
+
+Started GET "/api/v1/reports" for 127.0.0.1 at 2026-08-12 21:03:37 -0500
+Processing by Api::V1::ReportsController#index as */*
+Completed 404 Not Found in 0ms (ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+  
+ActiveRecord::RecordNotFound (Couldn't find Post without an ID):
+  
+app/controllers/api/v1/reports_controller.rb:51:in 'Api::V1::ReportsController#set_post'
+Started GET "/api/v1/posts" for 127.0.0.1 at 2026-08-12 21:07:31 -0500
+Started GET "/api/v1/communities" for 127.0.0.1 at 2026-08-12 21:07:31 -0500
+Processing by Api::V1::PostsController#index as */*
+Processing by Api::V1::CommunitiesController#index as */*
+  [1m[36mPost Load (17.4ms)[0m  [1m[34mSELECT "posts".* FROM "posts" ORDER BY "posts"."created_at" DESC /*action='index',application='Backend',controller='posts'*/[0m
+  ↳ app/controllers/api/v1/posts_controller.rb:12:in 'Enumerable#map'
+  [1m[36mUser Load (2.1ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" IN (1, 2) /*action='index',application='Backend',controller='posts'*/[0m
+  ↳ app/controllers/api/v1/posts_controller.rb:12:in 'Enumerable#map'
+  [1m[36mCommunity Load (1.1ms)[0m  [1m[34mSELECT "communities".* FROM "communities" WHERE "communities"."id" IN (1, 3, 2) /*action='index',application='Backend',controller='posts'*/[0m
+  ↳ app/controllers/api/v1/posts_controller.rb:12:in 'Enumerable#map'
+Completed 200 OK in 51ms (Views: 1.1ms | ActiveRecord: 20.6ms (3 queries, 0 cached) | GC: 9.9ms)
+
+
+  [1m[36mCommunity Load (47.8ms)[0m  [1m[34mSELECT "communities".* FROM "communities" ORDER BY "communities"."created_at" DESC /*action='index',application='Backend',controller='communities'*/[0m
+  ↳ app/controllers/api/v1/communities_controller.rb:7:in 'Enumerable#map'
+  [1m[36mPost Count (0.9ms)[0m  [1m[34mSELECT COUNT(*) FROM "posts" WHERE "posts"."community_id" = 3 /*action='index',application='Backend',controller='communities'*/[0m
+  ↳ app/controllers/api/v1/communities_controller.rb:34:in 'Api::V1::CommunitiesController#community_json'
+  [1m[36mPost Count (0.3ms)[0m  [1m[34mSELECT COUNT(*) FROM "posts" WHERE "posts"."community_id" = 2 /*action='index',application='Backend',controller='communities'*/[0m
+  ↳ app/controllers/api/v1/communities_controller.rb:34:in 'Api::V1::CommunitiesController#community_json'
+  [1m[36mPost Count (0.2ms)[0m  [1m[34mSELECT COUNT(*) FROM "posts" WHERE "posts"."community_id" = 1 /*action='index',application='Backend',controller='communities'*/[0m
+  ↳ app/controllers/api/v1/communities_controller.rb:34:in 'Api::V1::CommunitiesController#community_json'
+Completed 200 OK in 73ms (Views: 0.4ms | ActiveRecord: 76.4ms (4 queries, 0 cached) | GC: 18.5ms)
+
+
+Started GET "/api/v1/reports" for 127.0.0.1 at 2026-08-12 21:07:44 -0500
+Processing by Api::V1::ReportsController#index as */*
+Completed 404 Not Found in 1ms (ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+  
+ActiveRecord::RecordNotFound (Couldn't find Post without an ID):
+  
+app/controllers/api/v1/reports_controller.rb:51:in 'Api::V1::ReportsController#set_post'
+Using vips to process variants requires the libvips library. Please install libvips using the instructions on the libvips website.
+Started GET "/api/v1/reports" for 127.0.0.1 at 2026-08-12 21:12:49 -0500
+  [1m[36mActiveRecord::SchemaMigration Load (2.0ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='Backend'*/[0m
+Processing by Api::V1::ReportsController#index as */*
+Completed 404 Not Found in 45ms (ActiveRecord: 19.4ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+  
+ActiveRecord::RecordNotFound (Couldn't find Post without an ID):
+  
+app/controllers/api/v1/reports_controller.rb:51:in 'Api::V1::ReportsController#set_post'
+Using vips to process variants requires the libvips library. Please install libvips using the instructions on the libvips website.
+Started GET "/api/v1/reports" for 127.0.0.1 at 2026-08-12 21:14:48 -0500
+  [1m[36mActiveRecord::SchemaMigration Load (0.7ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='Backend'*/[0m
+Processing by Api::V1::ReportsController#index as */*
+  [1m[36mReport Load (3.9ms)[0m  [1m[34mSELECT "reports".* FROM "reports" ORDER BY "reports"."status" ASC, "reports"."created_at" DESC /*action='index',application='Backend',controller='reports'*/[0m
+  ↳ app/controllers/api/v1/reports_controller.rb:14:in 'Enumerable#map'
+  [1m[36mUser Load (0.7ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = 1 /*action='index',application='Backend',controller='reports'*/[0m
+  ↳ app/controllers/api/v1/reports_controller.rb:14:in 'Enumerable#map'
+  [1m[36mPost Load (0.7ms)[0m  [1m[34mSELECT "posts".* FROM "posts" WHERE "posts"."id" IN (5, 6, 7, 1) /*action='index',application='Backend',controller='reports'*/[0m
+  ↳ app/controllers/api/v1/reports_controller.rb:14:in 'Enumerable#map'
+Completed 200 OK in 127ms (Views: 0.3ms | ActiveRecord: 33.4ms (3 queries, 0 cached) | GC: 0.0ms)
+
+
+Using vips to process variants requires the libvips library. Please install libvips using the instructions on the libvips website.
+Started GET "/api/v1/reports" for 127.0.0.1 at 2026-08-12 21:17:19 -0500
+  [1m[36mActiveRecord::SchemaMigration Load (0.7ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='Backend'*/[0m
+Processing by Api::V1::ReportsController#index as */*
+  [1m[36mReport Load (0.8ms)[0m  [1m[34mSELECT "reports".* FROM "reports" ORDER BY "reports"."status" ASC, "reports"."created_at" DESC /*action='index',application='Backend',controller='reports'*/[0m
+  ↳ app/controllers/api/v1/reports_controller.rb:14:in 'Enumerable#map'
+  [1m[36mUser Load (0.7ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = 1 /*action='index',application='Backend',controller='reports'*/[0m
+  ↳ app/controllers/api/v1/reports_controller.rb:14:in 'Enumerable#map'
+  [1m[36mPost Load (0.8ms)[0m  [1m[34mSELECT "posts".* FROM "posts" WHERE "posts"."id" IN (5, 6, 7, 1) /*action='index',application='Backend',controller='reports'*/[0m
+  ↳ app/controllers/api/v1/reports_controller.rb:14:in 'Enumerable#map'
+Completed 200 OK in 114ms (Views: 0.3ms | ActiveRecord: 14.1ms (3 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/api/v1/reports" for 127.0.0.1 at 2026-08-12 21:17:30 -0500
+Processing by Api::V1::ReportsController#index as */*
+  [1m[36mReport Load (0.3ms)[0m  [1m[34mSELECT "reports".* FROM "reports" ORDER BY "reports"."status" ASC, "reports"."created_at" DESC /*action='index',application='Backend',controller='reports'*/[0m
+  ↳ app/controllers/api/v1/reports_controller.rb:14:in 'Enumerable#map'
+  [1m[36mUser Load (0.2ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = 1 /*action='index',application='Backend',controller='reports'*/[0m
+  ↳ app/controllers/api/v1/reports_controller.rb:14:in 'Enumerable#map'
+  [1m[36mPost Load (0.2ms)[0m  [1m[34mSELECT "posts".* FROM "posts" WHERE "posts"."id" IN (5, 6, 7, 1) /*action='index',application='Backend',controller='reports'*/[0m
+  ↳ app/controllers/api/v1/reports_controller.rb:14:in 'Enumerable#map'
+Completed 200 OK in 5ms (Views: 0.1ms | ActiveRecord: 0.8ms (3 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/api/v1/posts" for 127.0.0.1 at 2026-08-12 21:18:29 -0500
+Started GET "/api/v1/communities" for 127.0.0.1 at 2026-08-12 21:18:29 -0500
+Processing by Api::V1::CommunitiesController#index as */*
+  [1m[36mCommunity Load (2.9ms)[0m  [1m[34mSELECT "communities".* FROM "communities" ORDER BY "communities"."created_at" DESC /*action='index',application='Backend',controller='communities'*/[0m
+  ↳ app/controllers/api/v1/communities_controller.rb:7:in 'Enumerable#map'
+Processing by Api::V1::PostsController#index as */*
+  [1m[36mPost Count (3.8ms)[0m  [1m[34mSELECT COUNT(*) FROM "posts" WHERE "posts"."community_id" = 3 /*action='index',application='Backend',controller='communities'*/[0m
+  ↳ app/controllers/api/v1/communities_controller.rb:34:in 'Api::V1::CommunitiesController#community_json'
+  [1m[36mPost Count (0.4ms)[0m  [1m[34mSELECT COUNT(*) FROM "posts" WHERE "posts"."community_id" = 2 /*action='index',application='Backend',controller='communities'*/[0m
+  ↳ app/controllers/api/v1/communities_controller.rb:34:in 'Api::V1::CommunitiesController#community_json'
+  [1m[36mPost Count (0.3ms)[0m  [1m[34mSELECT COUNT(*) FROM "posts" WHERE "posts"."community_id" = 1 /*action='index',application='Backend',controller='communities'*/[0m
+  ↳ app/controllers/api/v1/communities_controller.rb:34:in 'Api::V1::CommunitiesController#community_json'
+Completed 200 OK in 105ms (Views: 0.9ms | ActiveRecord: 18.0ms (4 queries, 0 cached) | GC: 0.0ms)
+
+
+  [1m[36mPost Load (46.6ms)[0m  [1m[34mSELECT "posts".* FROM "posts" ORDER BY "posts"."created_at" DESC /*action='index',application='Backend',controller='posts'*/[0m
+  ↳ app/controllers/api/v1/posts_controller.rb:12:in 'Enumerable#map'
+  [1m[36mUser Load (0.9ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" IN (1, 2) /*action='index',application='Backend',controller='posts'*/[0m
+  ↳ app/controllers/api/v1/posts_controller.rb:12:in 'Enumerable#map'
+  [1m[36mCommunity Load (0.8ms)[0m  [1m[34mSELECT "communities".* FROM "communities" WHERE "communities"."id" IN (1, 3, 2) /*action='index',application='Backend',controller='posts'*/[0m
+  ↳ app/controllers/api/v1/posts_controller.rb:12:in 'Enumerable#map'
+Completed 200 OK in 61ms (Views: 0.3ms | ActiveRecord: 61.2ms (3 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/api/v1/reports" for 127.0.0.1 at 2026-08-12 21:18:31 -0500
+Processing by Api::V1::ReportsController#index as */*
+  [1m[36mReport Load (0.9ms)[0m  [1m[34mSELECT "reports".* FROM "reports" ORDER BY "reports"."status" ASC, "reports"."created_at" DESC /*action='index',application='Backend',controller='reports'*/[0m
+  ↳ app/controllers/api/v1/reports_controller.rb:14:in 'Enumerable#map'
+  [1m[36mUser Load (0.5ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = 1 /*action='index',application='Backend',controller='reports'*/[0m
+  ↳ app/controllers/api/v1/reports_controller.rb:14:in 'Enumerable#map'
+  [1m[36mPost Load (0.9ms)[0m  [1m[34mSELECT "posts".* FROM "posts" WHERE "posts"."id" IN (5, 6, 7, 1) /*action='index',application='Backend',controller='reports'*/[0m
+  ↳ app/controllers/api/v1/reports_controller.rb:14:in 'Enumerable#map'
+Completed 200 OK in 9ms (Views: 0.3ms | ActiveRecord: 2.3ms (3 queries, 0 cached) | GC: 0.0ms)
+
+
+Started PATCH "/api/v1/reports/4" for 127.0.0.1 at 2026-08-12 21:18:43 -0500
+Processing by Api::V1::ReportsController#update as */*
+  Parameters: {"report" => {"status" => "dismissed"}, "id" => "4"}
+  [1m[36mReport Load (2.6ms)[0m  [1m[34mSELECT "reports".* FROM "reports" WHERE "reports"."id" = 4 LIMIT 1 /*action='update',application='Backend',controller='reports'*/[0m
+  ↳ app/controllers/api/v1/reports_controller.rb:31:in 'Api::V1::ReportsController#update'
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN /*action='update',application='Backend',controller='reports'*/[0m
+  ↳ app/controllers/api/v1/reports_controller.rb:33:in 'Api::V1::ReportsController#update'
+  [1m[36mReport Update (25.5ms)[0m  [1m[33mUPDATE "reports" SET "status" = 2, "reviewed_at" = '2026-08-13 02:18:43.964369', "updated_at" = '2026-08-13 02:18:43.967229' WHERE "reports"."id" = 4 /*action='update',application='Backend',controller='reports'*/[0m
+  ↳ app/controllers/api/v1/reports_controller.rb:33:in 'Api::V1::ReportsController#update'
+  [1m[36mTRANSACTION (1.6ms)[0m  [1m[35mCOMMIT /*action='update',application='Backend',controller='reports'*/[0m
+  ↳ app/controllers/api/v1/reports_controller.rb:33:in 'Api::V1::ReportsController#update'
+  [1m[36mPost Load (0.4ms)[0m  [1m[34mSELECT "posts".* FROM "posts" WHERE "posts"."id" = 5 LIMIT 1 /*action='update',application='Backend',controller='reports'*/[0m
+  ↳ app/controllers/api/v1/reports_controller.rb:65:in 'Api::V1::ReportsController#report_json'
+  [1m[36mUser Load (0.3ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = 1 LIMIT 1 /*action='update',application='Backend',controller='reports'*/[0m
+  ↳ app/controllers/api/v1/reports_controller.rb:69:in 'Api::V1::ReportsController#report_json'
+Completed 200 OK in 55ms (Views: 0.2ms | ActiveRecord: 30.4ms (4 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/api/v1/reports" for 127.0.0.1 at 2026-08-12 21:18:44 -0500
+Processing by Api::V1::ReportsController#index as */*
+  [1m[36mReport Load (5.6ms)[0m  [1m[34mSELECT "reports".* FROM "reports" ORDER BY "reports"."status" ASC, "reports"."created_at" DESC /*action='index',application='Backend',controller='reports'*/[0m
+  ↳ app/controllers/api/v1/reports_controller.rb:14:in 'Enumerable#map'
+  [1m[36mUser Load (1.1ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = 1 /*action='index',application='Backend',controller='reports'*/[0m
+  ↳ app/controllers/api/v1/reports_controller.rb:14:in 'Enumerable#map'
+  [1m[36mPost Load (0.3ms)[0m  [1m[34mSELECT "posts".* FROM "posts" WHERE "posts"."id" IN (6, 7, 5, 1) /*action='index',application='Backend',controller='reports'*/[0m
+  ↳ app/controllers/api/v1/reports_controller.rb:14:in 'Enumerable#map'
+Completed 200 OK in 15ms (Views: 0.2ms | ActiveRecord: 7.0ms (3 queries, 0 cached) | GC: 0.0ms)
+
+
+Started PATCH "/api/v1/reports/3" for 127.0.0.1 at 2026-08-12 21:18:47 -0500
+Processing by Api::V1::ReportsController#update as */*
+  Parameters: {"report" => {"status" => "reviewed"}, "id" => "3"}
+  [1m[36mReport Load (0.3ms)[0m  [1m[34mSELECT "reports".* FROM "reports" WHERE "reports"."id" = 3 LIMIT 1 /*action='update',application='Backend',controller='reports'*/[0m
+  ↳ app/controllers/api/v1/reports_controller.rb:31:in 'Api::V1::ReportsController#update'
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*action='update',application='Backend',controller='reports'*/[0m
+  ↳ app/controllers/api/v1/reports_controller.rb:33:in 'Api::V1::ReportsController#update'
+  [1m[36mReport Update (2.0ms)[0m  [1m[33mUPDATE "reports" SET "status" = 1, "reviewed_at" = '2026-08-13 02:18:47.726493', "updated_at" = '2026-08-13 02:18:47.726840' WHERE "reports"."id" = 3 /*action='update',application='Backend',controller='reports'*/[0m
+  ↳ app/controllers/api/v1/reports_controller.rb:33:in 'Api::V1::ReportsController#update'
+  [1m[36mTRANSACTION (0.8ms)[0m  [1m[35mCOMMIT /*action='update',application='Backend',controller='reports'*/[0m
+  ↳ app/controllers/api/v1/reports_controller.rb:33:in 'Api::V1::ReportsController#update'
+  [1m[36mPost Load (0.3ms)[0m  [1m[34mSELECT "posts".* FROM "posts" WHERE "posts"."id" = 6 LIMIT 1 /*action='update',application='Backend',controller='reports'*/[0m
+  ↳ app/controllers/api/v1/reports_controller.rb:65:in 'Api::V1::ReportsController#report_json'
+  [1m[36mUser Load (0.3ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = 1 LIMIT 1 /*action='update',application='Backend',controller='reports'*/[0m
+  ↳ app/controllers/api/v1/reports_controller.rb:69:in 'Api::V1::ReportsController#report_json'
+Completed 200 OK in 12ms (Views: 0.2ms | ActiveRecord: 3.8ms (4 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/api/v1/reports" for 127.0.0.1 at 2026-08-12 21:18:47 -0500
+Processing by Api::V1::ReportsController#index as */*
+  [1m[36mReport Load (0.3ms)[0m  [1m[34mSELECT "reports".* FROM "reports" ORDER BY "reports"."status" ASC, "reports"."created_at" DESC /*action='index',application='Backend',controller='reports'*/[0m
+  ↳ app/controllers/api/v1/reports_controller.rb:14:in 'Enumerable#map'
+  [1m[36mUser Load (0.3ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = 1 /*action='index',application='Backend',controller='reports'*/[0m
+  ↳ app/controllers/api/v1/reports_controller.rb:14:in 'Enumerable#map'
+  [1m[36mPost Load (0.4ms)[0m  [1m[34mSELECT "posts".* FROM "posts" WHERE "posts"."id" IN (7, 6, 5, 1) /*action='index',application='Backend',controller='reports'*/[0m
+  ↳ app/controllers/api/v1/reports_controller.rb:14:in 'Enumerable#map'
+Completed 200 OK in 8ms (Views: 0.1ms | ActiveRecord: 1.0ms (3 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/api/v1/posts" for 127.0.0.1 at 2026-08-12 21:19:06 -0500
+Started GET "/api/v1/communities" for 127.0.0.1 at 2026-08-12 21:19:06 -0500
+Processing by Api::V1::CommunitiesController#index as */*
+  [1m[36mCommunity Load (0.5ms)[0m  [1m[34mSELECT "communities".* FROM "communities" ORDER BY "communities"."created_at" DESC /*action='index',application='Backend',controller='communities'*/[0m
+  ↳ app/controllers/api/v1/communities_controller.rb:7:in 'Enumerable#map'
+  [1m[36mPost Count (0.5ms)[0m  [1m[34mSELECT COUNT(*) FROM "posts" WHERE "posts"."community_id" = 3 /*action='index',application='Backend',controller='communities'*/[0m
+  ↳ app/controllers/api/v1/communities_controller.rb:34:in 'Api::V1::CommunitiesController#community_json'
+Processing by Api::V1::PostsController#index as */*
+  [1m[36mPost Count (0.9ms)[0m  [1m[34mSELECT COUNT(*) FROM "posts" WHERE "posts"."community_id" = 2 /*action='index',application='Backend',controller='communities'*/[0m
+  ↳ app/controllers/api/v1/communities_controller.rb:34:in 'Api::V1::CommunitiesController#community_json'
+  [1m[36mPost Load (1.9ms)[0m  [1m[34mSELECT "posts".* FROM "posts" ORDER BY "posts"."created_at" DESC /*action='index',application='Backend',controller='posts'*/[0m
+  ↳ app/controllers/api/v1/posts_controller.rb:12:in 'Enumerable#map'
+  [1m[36mPost Count (2.2ms)[0m  [1m[34mSELECT COUNT(*) FROM "posts" WHERE "posts"."community_id" = 1 /*action='index',application='Backend',controller='communities'*/[0m
+  ↳ app/controllers/api/v1/communities_controller.rb:34:in 'Api::V1::CommunitiesController#community_json'
+Completed 200 OK in 12ms (Views: 0.1ms | ActiveRecord: 4.2ms (4 queries, 0 cached) | GC: 0.0ms)
+
+
+  [1m[36mUser Load (2.1ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" IN (1, 2) /*action='index',application='Backend',controller='posts'*/[0m
+  ↳ app/controllers/api/v1/posts_controller.rb:12:in 'Enumerable#map'
+  [1m[36mCommunity Load (0.5ms)[0m  [1m[34mSELECT "communities".* FROM "communities" WHERE "communities"."id" IN (1, 3, 2) /*action='index',application='Backend',controller='posts'*/[0m
+  ↳ app/controllers/api/v1/posts_controller.rb:12:in 'Enumerable#map'
+Completed 200 OK in 12ms (Views: 0.1ms | ActiveRecord: 4.5ms (3 queries, 0 cached) | GC: 0.0ms)
+
+
+Using vips to process variants requires the libvips library. Please install libvips using the instructions on the libvips website.
+Using vips to process variants requires the libvips library. Please install libvips using the instructions on the libvips website.
+  [1m[35m (0.3ms)[0m  [1m[34mSELECT pg_try_advisory_lock(5073945470573576205) /*application='Backend'*/[0m
+  [1m[36mActiveRecord::SchemaMigration Load (0.9ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='Backend'*/[0m
+  [1m[36mActiveRecord::InternalMetadata Load (2.2ms)[0m  [1m[34mSELECT * FROM "ar_internal_metadata" WHERE "ar_internal_metadata"."key" = 'environment' ORDER BY "ar_internal_metadata"."key" ASC LIMIT 1 /*application='Backend'*/[0m
+Migrating to CreateSavedPosts (20260813022015)
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN /*application='Backend'*/[0m
+  [1m[35m (30.5ms)[0m  [1m[35mCREATE TABLE "saved_posts" ("id" bigserial primary key, "user_id" bigint NOT NULL, "post_id" bigint NOT NULL, "created_at" timestamp(6) NOT NULL, "updated_at" timestamp(6) NOT NULL, CONSTRAINT "fk_rails_afdf46603a"
+FOREIGN KEY ("user_id")
+  REFERENCES "users" ("id")
+, CONSTRAINT "fk_rails_0ac65331e7"
+FOREIGN KEY ("post_id")
+  REFERENCES "posts" ("id")
+) /*application='Backend'*/[0m
+  [1m[35m (2.5ms)[0m  [1m[35mCREATE INDEX "index_saved_posts_on_user_id" ON "saved_posts" ("user_id") /*application='Backend'*/[0m
+  [1m[35m (4.4ms)[0m  [1m[35mCREATE INDEX "index_saved_posts_on_post_id" ON "saved_posts" ("post_id") /*application='Backend'*/[0m
+  [1m[36mActiveRecord::SchemaMigration Create (1.6ms)[0m  [1m[32mINSERT INTO "schema_migrations" ("version") VALUES ('20260813022015') RETURNING "version" /*application='Backend'*/[0m
+  [1m[36mTRANSACTION (0.4ms)[0m  [1m[35mCOMMIT /*application='Backend'*/[0m
+  [1m[35m (0.4ms)[0m  [1m[34mSELECT pg_advisory_unlock(5073945470573576205) /*application='Backend'*/[0m
+  [1m[36mActiveRecord::SchemaMigration Load (0.2ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='Backend'*/[0m
+  [1m[35mSQL (0.1ms)[0m  [1m[35mSET search_path TO public /*application='Backend'*/[0m
+  [1m[35mSQL (0.5ms)[0m  [1m[35mSET search_path TO "$user", public /*application='Backend'*/[0m
+  [1m[35mSQL (0.1ms)[0m  [1m[35mSET search_path TO public /*application='Backend'*/[0m
+  [1m[35mSQL (0.1ms)[0m  [1m[35mSET search_path TO "$user", public /*application='Backend'*/[0m
+Using vips to process variants requires the libvips library. Please install libvips using the instructions on the libvips website.
+  [1m[35m (0.1ms)[0m  [1m[34mSELECT pg_try_advisory_lock(5073945470573576205) /*application='Backend'*/[0m
+  [1m[36mActiveRecord::SchemaMigration Load (1.5ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='Backend'*/[0m
+  [1m[36mActiveRecord::InternalMetadata Load (1.0ms)[0m  [1m[34mSELECT * FROM "ar_internal_metadata" WHERE "ar_internal_metadata"."key" = 'environment' ORDER BY "ar_internal_metadata"."key" ASC LIMIT 1 /*application='Backend'*/[0m
+  [1m[35m (0.2ms)[0m  [1m[34mSELECT pg_advisory_unlock(5073945470573576205) /*application='Backend'*/[0m
+  [1m[36mActiveRecord::SchemaMigration Load (0.2ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='Backend'*/[0m
+  [1m[35mSQL (0.1ms)[0m  [1m[35mSET search_path TO public /*application='Backend'*/[0m
+  [1m[35mSQL (0.2ms)[0m  [1m[35mSET search_path TO "$user", public /*application='Backend'*/[0m
+  [1m[35mSQL (0.1ms)[0m  [1m[35mSET search_path TO public /*application='Backend'*/[0m
+  [1m[35mSQL (0.1ms)[0m  [1m[35mSET search_path TO "$user", public /*application='Backend'*/[0m
+Using vips to process variants requires the libvips library. Please install libvips using the instructions on the libvips website.
+  [1m[36mActiveRecord::SchemaMigration Load (0.8ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='Backend'*/[0m
+Using vips to process variants requires the libvips library. Please install libvips using the instructions on the libvips website.
+Using vips to process variants requires the libvips library. Please install libvips using the instructions on the libvips website.
+  [1m[36mUser Load (0.8ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = 1 LIMIT 1 /*application='Backend'*/[0m
+  [1m[36mPost Load (0.5ms)[0m  [1m[34mSELECT "posts".* FROM "posts" WHERE "posts"."id" = 1 LIMIT 1 /*application='Backend'*/[0m
+  [1m[36mSavedPost Exists? (4.2ms)[0m  [1m[34mSELECT 1 AS one FROM "saved_posts" WHERE "saved_posts"."user_id" = 1 AND "saved_posts"."post_id" = 1 LIMIT 1 /*application='Backend'*/[0m
+Using vips to process variants requires the libvips library. Please install libvips using the instructions on the libvips website.
+Using vips to process variants requires the libvips library. Please install libvips using the instructions on the libvips website.
+Started POST "/api/v1/posts/1/saved_posts" for 127.0.0.1 at 2026-08-12 21:26:53 -0500
+  [1m[36mActiveRecord::SchemaMigration Load (1.0ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='Backend'*/[0m
+Processing by Api::V1::SavedPostsController#create as */*
+  Parameters: {"saved_post" => {"user_id" => 1}, "post_id" => "1"}
+  [1m[36mPost Load (0.8ms)[0m  [1m[34mSELECT "posts".* FROM "posts" WHERE "posts"."id" = 1 LIMIT 1 /*action='create',application='Backend',controller='saved_posts'*/[0m
+  ↳ app/controllers/api/v1/saved_posts_controller.rb:15:in 'Api::V1::SavedPostsController#create'
+  [1m[36mUser Load (0.4ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = 1 LIMIT 1 /*action='create',application='Backend',controller='saved_posts'*/[0m
+  ↳ app/controllers/api/v1/saved_posts_controller.rb:16:in 'Api::V1::SavedPostsController#create'
+  [1m[36mSavedPost Load (0.4ms)[0m  [1m[34mSELECT "saved_posts".* FROM "saved_posts" WHERE "saved_posts"."user_id" = 1 AND "saved_posts"."post_id" = 1 LIMIT 1 /*action='create',application='Backend',controller='saved_posts'*/[0m
+  ↳ app/controllers/api/v1/saved_posts_controller.rb:18:in 'Api::V1::SavedPostsController#create'
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*action='create',application='Backend',controller='saved_posts'*/[0m
+  ↳ app/controllers/api/v1/saved_posts_controller.rb:23:in 'Api::V1::SavedPostsController#create'
+  [1m[36mSavedPost Exists? (1.5ms)[0m  [1m[34mSELECT 1 AS one FROM "saved_posts" WHERE "saved_posts"."user_id" = 1 AND "saved_posts"."post_id" = 1 LIMIT 1 /*action='create',application='Backend',controller='saved_posts'*/[0m
+  ↳ app/controllers/api/v1/saved_posts_controller.rb:23:in 'Api::V1::SavedPostsController#create'
+  [1m[36mSavedPost Create (7.1ms)[0m  [1m[32mINSERT INTO "saved_posts" ("user_id", "post_id", "created_at", "updated_at") VALUES (1, 1, '2026-08-13 02:26:53.905359', '2026-08-13 02:26:53.905359') RETURNING "id" /*action='create',application='Backend',controller='saved_posts'*/[0m
+  ↳ app/controllers/api/v1/saved_posts_controller.rb:23:in 'Api::V1::SavedPostsController#create'
+  [1m[36mTRANSACTION (0.4ms)[0m  [1m[35mCOMMIT /*action='create',application='Backend',controller='saved_posts'*/[0m
+  ↳ app/controllers/api/v1/saved_posts_controller.rb:23:in 'Api::V1::SavedPostsController#create'
+  [1m[36mUser Load (0.3ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = 1 LIMIT 1 /*action='create',application='Backend',controller='saved_posts'*/[0m
+  ↳ app/controllers/api/v1/saved_posts_controller.rb:59:in 'Api::V1::SavedPostsController#saved_post_json'
+  [1m[36mCommunity Load (0.8ms)[0m  [1m[34mSELECT "communities".* FROM "communities" WHERE "communities"."id" = 1 LIMIT 1 /*action='create',application='Backend',controller='saved_posts'*/[0m
+  ↳ app/controllers/api/v1/saved_posts_controller.rb:63:in 'Api::V1::SavedPostsController#saved_post_json'
+Completed 201 Created in 108ms (Views: 0.8ms | ActiveRecord: 37.0ms (7 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/api/v1/users/1/saved_posts" for 127.0.0.1 at 2026-08-12 21:27:00 -0500
+Processing by Api::V1::SavedPostsController#index as */*
+  Parameters: {"user_id" => "1"}
+  [1m[36mUser Load (0.6ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = 1 LIMIT 1 /*action='index',application='Backend',controller='saved_posts'*/[0m
+  ↳ app/controllers/api/v1/saved_posts_controller.rb:5:in 'Api::V1::SavedPostsController#index'
+  [1m[36mSavedPost Load (0.7ms)[0m  [1m[34mSELECT "saved_posts".* FROM "saved_posts" WHERE "saved_posts"."user_id" = 1 ORDER BY "saved_posts"."created_at" DESC /*action='index',application='Backend',controller='saved_posts'*/[0m
+  ↳ app/controllers/api/v1/saved_posts_controller.rb:11:in 'Enumerable#map'
+  [1m[36mPost Load (0.5ms)[0m  [1m[34mSELECT "posts".* FROM "posts" WHERE "posts"."id" = 1 /*action='index',application='Backend',controller='saved_posts'*/[0m
+  ↳ app/controllers/api/v1/saved_posts_controller.rb:11:in 'Enumerable#map'
+  [1m[36mUser Load (0.2ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = 1 /*action='index',application='Backend',controller='saved_posts'*/[0m
+  ↳ app/controllers/api/v1/saved_posts_controller.rb:11:in 'Enumerable#map'
+  [1m[36mCommunity Load (0.2ms)[0m  [1m[34mSELECT "communities".* FROM "communities" WHERE "communities"."id" = 1 /*action='index',application='Backend',controller='saved_posts'*/[0m
+  ↳ app/controllers/api/v1/saved_posts_controller.rb:11:in 'Enumerable#map'
+Completed 200 OK in 21ms (Views: 0.1ms | ActiveRecord: 2.2ms (5 queries, 0 cached) | GC: 0.0ms)
+
+
+Started DELETE "/api/v1/saved_posts/1" for 127.0.0.1 at 2026-08-12 21:27:15 -0500
+Processing by Api::V1::SavedPostsController#destroy as */*
+  Parameters: {"id" => "1"}
+  [1m[36mSavedPost Load (0.3ms)[0m  [1m[34mSELECT "saved_posts".* FROM "saved_posts" WHERE "saved_posts"."id" = 1 LIMIT 1 /*action='destroy',application='Backend',controller='saved_posts'*/[0m
+  ↳ app/controllers/api/v1/saved_posts_controller.rb:34:in 'Api::V1::SavedPostsController#destroy'
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*action='destroy',application='Backend',controller='saved_posts'*/[0m
+  ↳ app/controllers/api/v1/saved_posts_controller.rb:35:in 'Api::V1::SavedPostsController#destroy'
+  [1m[36mSavedPost Destroy (2.2ms)[0m  [1m[31mDELETE FROM "saved_posts" WHERE "saved_posts"."id" = 1 /*action='destroy',application='Backend',controller='saved_posts'*/[0m
+  ↳ app/controllers/api/v1/saved_posts_controller.rb:35:in 'Api::V1::SavedPostsController#destroy'
+  [1m[36mTRANSACTION (0.4ms)[0m  [1m[35mCOMMIT /*action='destroy',application='Backend',controller='saved_posts'*/[0m
+  ↳ app/controllers/api/v1/saved_posts_controller.rb:35:in 'Api::V1::SavedPostsController#destroy'
+Completed 204 No Content in 6ms (ActiveRecord: 3.0ms (2 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/api/v1/saved_posts/1" for 127.0.0.1 at 2026-08-12 21:27:47 -0500
+  
+ActionController::RoutingError (No route matches [GET] "/api/v1/saved_posts/1"):
+  
