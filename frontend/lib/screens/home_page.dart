@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'post_detail_page.dart';
 import '../models/community.dart';
 import '../models/post.dart';
 import '../services/api_service.dart';
@@ -189,7 +190,19 @@ class _HomePageState extends State<HomePage> {
                   sliver: SliverGrid(
                     delegate: SliverChildBuilderDelegate(
                       (context, index) {
-                        return PostCard(post: posts[index]);
+                        return PostCard(
+                          post: posts[index],
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => PostDetailPage(
+                                  post: posts[index],
+                                ),
+                              ),
+                            );
+                          },
+                        );
                       },
                       childCount: posts.length,
                     ),
@@ -213,49 +226,55 @@ class _HomePageState extends State<HomePage> {
 
 class PostCard extends StatelessWidget {
   final Post post;
+  final VoidCallback onTap;
 
   const PostCard({
     super.key,
     required this.post,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     return Card(
       elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Chip(
-              label: Text(post.communityName),
-              avatar: const Icon(Icons.groups, size: 16),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              post.title,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
-            const SizedBox(height: 8),
-            Expanded(
-              child: Text(
-                post.content,
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
+      child:InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Chip(
+                label: Text(post.communityName),
+                avatar: const Icon(Icons.groups, size: 16),
               ),
-            ),
-            Text(
-              'Publicado por ${post.userName}',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-          ],
+              const SizedBox(height: 8),
+              Text(
+                post.title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+              const SizedBox(height: 8),
+              Expanded(
+                child: Text(
+                  post.content,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              Text(
+                'Publicado por ${post.userName}',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ],
+          ),
         ),
-      ),
+      )
     );
   }
 }
