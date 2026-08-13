@@ -1,18 +1,22 @@
 module Api
   module V1
     class ReportsController < ApplicationController
-      before_action :set_post
-
       def index
-        reports = @post.reports
-                       .includes(:user)
-                       .order(created_at: :desc)
+        reports = if params[:post_id].present?
+                    Post.find(params[:post_id]).reports
+                  else
+                    Report.all
+                  end
+
+        reports = reports.includes(:user, :post)
+                         .order(status: :asc, created_at: :desc)
 
         render json: reports.map { |report| report_json(report) }
       end
 
       def create
-        report = @post.reports.new(report_params)
+        post = Post.find(params[:post_id])
+        report = post.reports.new(report_params)
 
         if report.save
           render json: report_json(report), status: :created
@@ -23,14 +27,31 @@ module Api
         end
       end
 
-      private
+      def update
+        report = Report.find(params[:id])
 
-      def set_post
-        @post = Post.find(params[:post_id])
+        if report.update(
+          status: update_params[:status],
+          reviewed_at: Time.current
+        )
+          report.post.update(status: :hidden) if report.action_taken?
+
+          render json: report_json(report)
+        else
+          render json: {
+            errors: report.errors.full_messages
+          }, status: :unprocessable_entity
+        end
       end
+
+      private
 
       def report_params
         params.require(:report).permit(:user_id, :reason)
+      end
+
+      def update_params
+        params.require(:report).permit(:status)
       end
 
       def report_json(report)
@@ -40,11 +61,14 @@ module Api
           status: report.status,
           reviewed_at: report.reviewed_at,
           created_at: report.created_at,
+          post: {
+            id: report.post.id,
+            title: report.post.title
+          },
           user: {
             id: report.user.id,
             name: report.user.name
-          },
-          post_id: report.post_id
+          }
         }
       end
     end
