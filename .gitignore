@@ -1,0 +1,62 @@
+# Sistema operativo
+.DS_Store
+.Trashes
+*.swp
+*.swo
+
+# VS Code / IDE
+.idea/
+*.iml
+.vscode/*.code-workspace
+
+# Variables de entorno y secretos
+.env
+.env.*
+!.env.example
+
+# Flutter
+frontend/.dart_tool/
+frontend/.flutter-plugins
+frontend/.flutter-plugins-dependencies
+frontend/.packages
+frontend/.pub-cache/
+frontend/build/
+frontend/coverage/
+
+# Android
+frontend/android/.gradle/
+frontend/android/.cxx/
+frontend/android/local.properties
+frontend/android/captures/
+frontend/android/app/debug/
+frontend/android/app/profile/
+
+# iOS/macOS
+frontend/ios/Pods/
+frontend/ios/.symlinks/
+frontend/ios/Flutter/ephemeral/
+frontend/ios/Flutter/Generated.xcconfig
+frontend/ios/Flutter/flutter_export_environment.sh
+
+frontend/macos/Pods/
+frontend/macos/.symlinks/
+frontend/macos/Flutter/ephemeral/
+frontend/macos/Flutter/Generated.xcconfig
+frontend/macos/Flutter/flutter_export_environment.sh
+
+# Rails
+backend/.bundle/
+backend/log/*
+!backend/log/.keep
+backend/tmp/*
+!backend/tmp/.keep
+backend/storage/*
+!backend/storage/.keep
+backend/public/assets/
+backend/.env
+backend/config/master.key
+backend/config/credentials/*.key
+
+# Bases de datos locales
+backend/db/*.sqlite3
+backend/db/*.sqlite3-*
