@@ -4,6 +4,7 @@ import 'post_detail_page.dart';
 import 'create_post_page.dart';
 import 'moderation_page.dart';
 import 'saved_posts_page.dart';
+import 'interests_page.dart';
 import '../models/community.dart';
 import '../models/post.dart';
 import '../services/api_service.dart';
@@ -31,7 +32,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   void loadData() {
-    postsFuture = apiService.fetchPosts();
+    postsFuture = apiService.fetchPersonalizedFeed();
     communitiesFuture = apiService.fetchCommunities();
   }
 
@@ -40,10 +41,7 @@ class _HomePageState extends State<HomePage> {
       loadData();
     });
 
-    await Future.wait([
-      postsFuture,
-      communitiesFuture,
-    ]);
+    await Future.wait([postsFuture, communitiesFuture]);
   }
 
   List<Post> filterPosts(List<Post> posts) {
@@ -52,7 +50,8 @@ class _HomePageState extends State<HomePage> {
           post.title.toLowerCase().contains(searchText.toLowerCase()) ||
           post.content.toLowerCase().contains(searchText.toLowerCase());
 
-      final matchesCommunity = selectedCommunityId == null ||
+      final matchesCommunity =
+          selectedCommunityId == null ||
           post.communityId == selectedCommunityId;
 
       return matchesSearch && matchesCommunity;
@@ -72,21 +71,33 @@ class _HomePageState extends State<HomePage> {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(
-                  builder: (_) => const SavedPostsPage(),
-                ),
+                MaterialPageRoute(builder: (_) => const SavedPostsPage()),
               );
             },
             icon: const Icon(Icons.bookmark),
             tooltip: 'Publicaciones guardadas',
           ),
           IconButton(
+            onPressed: () async {
+              final updated = await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const InterestsPage()),
+              );
+
+              if (updated == true) {
+                setState(() {
+                  loadData();
+                });
+              }
+            },
+            icon: const Icon(Icons.interests),
+            tooltip: 'Mis intereses',
+          ),
+          IconButton(
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(
-                  builder: (_) => const ModerationPage(),
-                ),
+                MaterialPageRoute(builder: (_) => const ModerationPage()),
               );
             },
             icon: const Icon(Icons.admin_panel_settings),
@@ -101,9 +112,7 @@ class _HomePageState extends State<HomePage> {
               final created = await Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => CreatePostPage(
-                    communities: communities,
-                  ),
+                  builder: (_) => CreatePostPage(communities: communities),
                 ),
               );
 
@@ -206,9 +215,7 @@ class _HomePageState extends State<HomePage> {
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const SliverFillRemaining(
-                    child: Center(
-                      child: CircularProgressIndicator(),
-                    ),
+                    child: Center(child: CircularProgressIndicator()),
                   );
                 }
 
@@ -230,40 +237,34 @@ class _HomePageState extends State<HomePage> {
 
                 if (posts.isEmpty) {
                   return const SliverFillRemaining(
-                    child: Center(
-                      child: Text('No existen publicaciones.'),
-                    ),
+                    child: Center(child: Text('No existen publicaciones.')),
                   );
                 }
 
                 return SliverPadding(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
                   sliver: SliverGrid(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        return PostCard(
-                          post: posts[index],
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => PostDetailPage(
-                                  post: posts[index],
-                                ),
-                              ),
-                            );
-                          },
-                        );
-                      },
-                      childCount: posts.length,
-                    ),
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      return PostCard(
+                        post: posts[index],
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  PostDetailPage(post: posts[index]),
+                            ),
+                          );
+                        },
+                      );
+                    }, childCount: posts.length),
                     gridDelegate:
                         const SliverGridDelegateWithMaxCrossAxisExtent(
-                      maxCrossAxisExtent: 420,
-                      mainAxisExtent: 230,
-                      crossAxisSpacing: 16,
-                      mainAxisSpacing: 16,
-                    ),
+                          maxCrossAxisExtent: 420,
+                          mainAxisExtent: 230,
+                          crossAxisSpacing: 16,
+                          mainAxisSpacing: 16,
+                        ),
                   ),
                 );
               },
@@ -279,17 +280,13 @@ class PostCard extends StatelessWidget {
   final Post post;
   final VoidCallback onTap;
 
-  const PostCard({
-    super.key,
-    required this.post,
-    required this.onTap,
-  });
+  const PostCard({super.key, required this.post, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return Card(
       elevation: 2,
-      child:InkWell(
+      child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
         child: Padding(
@@ -306,9 +303,8 @@ class PostCard extends StatelessWidget {
                 post.title,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                style: Theme.of(context).textTheme.titleMedium
+                    ?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               Expanded(
@@ -325,7 +321,7 @@ class PostCard extends StatelessWidget {
             ],
           ),
         ),
-      )
+      ),
     );
   }
 }

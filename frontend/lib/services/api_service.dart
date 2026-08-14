@@ -8,14 +8,13 @@ import '../models/comment.dart';
 import '../models/reaction.dart';
 import '../models/report.dart';
 import '../models/saved_post.dart';
+import '../models/interest.dart';
 
 class ApiService {
   static const String baseUrl = 'http://127.0.0.1:3000/api/v1';
 
   Future<List<Community>> fetchCommunities() async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/communities'),
-    );
+    final response = await http.get(Uri.parse('$baseUrl/communities'));
 
     if (response.statusCode != 200) {
       throw Exception('No se pudieron cargar las comunidades');
@@ -23,15 +22,11 @@ class ApiService {
 
     final data = jsonDecode(response.body) as List;
 
-    return data
-        .map((item) => Community.fromJson(item))
-        .toList();
+    return data.map((item) => Community.fromJson(item)).toList();
   }
 
   Future<List<Post>> fetchPosts() async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/posts'),
-    );
+    final response = await http.get(Uri.parse('$baseUrl/posts'));
 
     if (response.statusCode != 200) {
       throw Exception('No se pudieron cargar las publicaciones');
@@ -39,15 +34,11 @@ class ApiService {
 
     final data = jsonDecode(response.body) as List;
 
-    return data
-        .map((item) => Post.fromJson(item))
-        .toList();
+    return data.map((item) => Post.fromJson(item)).toList();
   }
 
   Future<Post> fetchPost(int postId) async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/posts/$postId'),
-    );
+    final response = await http.get(Uri.parse('$baseUrl/posts/$postId'));
 
     if (response.statusCode != 200) {
       throw Exception('No se pudo cargar la publicación');
@@ -67,25 +58,15 @@ class ApiService {
 
     final data = jsonDecode(response.body) as List;
 
-    return data
-        .map((item) => Comment.fromJson(item))
-        .toList();
+    return data.map((item) => Comment.fromJson(item)).toList();
   }
 
-  Future<Comment> createComment(
-    int postId,
-    String content,
-  ) async {
+  Future<Comment> createComment(int postId, String content) async {
     final response = await http.post(
       Uri.parse('$baseUrl/posts/$postId/comments'),
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
-        'comment': {
-          'user_id': 1,
-          'content': content,
-        },
+        'comment': {'user_id': 1, 'content': content},
       }),
     );
 
@@ -99,14 +80,9 @@ class ApiService {
   Future<Reaction> createReaction(int postId) async {
     final response = await http.post(
       Uri.parse('$baseUrl/posts/$postId/reactions'),
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
-        'reaction': {
-          'user_id': 1,
-          'kind': 'like',
-        },
+        'reaction': {'user_id': 1, 'kind': 'like'},
       }),
     );
 
@@ -125,9 +101,7 @@ class ApiService {
   }) async {
     final response = await http.post(
       Uri.parse('$baseUrl/communities/$communityId/posts'),
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
         'post': {
           'user_id': 1,
@@ -149,14 +123,9 @@ class ApiService {
   Future<void> createReport(int postId, String reason) async {
     final response = await http.post(
       Uri.parse('$baseUrl/posts/$postId/reports'),
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
-        'report': {
-          'user_id': 1,
-          'reason': reason,
-        },
+        'report': {'user_id': 1, 'reason': reason},
       }),
     );
 
@@ -166,9 +135,7 @@ class ApiService {
   }
 
   Future<List<Report>> fetchReports() async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/reports'),
-    );
+    final response = await http.get(Uri.parse('$baseUrl/reports'));
 
     if (response.statusCode != 200) {
       throw Exception('No se pudieron cargar los reportes');
@@ -176,24 +143,15 @@ class ApiService {
 
     final data = jsonDecode(response.body) as List;
 
-    return data
-        .map((item) => Report.fromJson(item))
-        .toList();
+    return data.map((item) => Report.fromJson(item)).toList();
   }
 
-  Future<Report> updateReport(
-    int reportId,
-    String status,
-  ) async {
+  Future<Report> updateReport(int reportId, String status) async {
     final response = await http.patch(
       Uri.parse('$baseUrl/reports/$reportId'),
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
-        'report': {
-          'status': status,
-        },
+        'report': {'status': status},
       }),
     );
 
@@ -207,13 +165,9 @@ class ApiService {
   Future<void> savePost(int postId) async {
     final response = await http.post(
       Uri.parse('$baseUrl/posts/$postId/saved_posts'),
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
-        'saved_post': {
-          'user_id': 1,
-        },
+        'saved_post': {'user_id': 1},
       }),
     );
 
@@ -223,9 +177,7 @@ class ApiService {
   }
 
   Future<List<SavedPost>> fetchSavedPosts() async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/users/1/saved_posts'),
-    );
+    final response = await http.get(Uri.parse('$baseUrl/users/1/saved_posts'));
 
     if (response.statusCode != 200) {
       throw Exception('No se pudieron cargar las publicaciones guardadas');
@@ -233,9 +185,7 @@ class ApiService {
 
     final data = jsonDecode(response.body) as List;
 
-    return data
-        .map((item) => SavedPost.fromJson(item))
-        .toList();
+    return data.map((item) => SavedPost.fromJson(item)).toList();
   }
 
   Future<void> deleteSavedPost(int savedPostId) async {
@@ -246,5 +196,53 @@ class ApiService {
     if (response.statusCode != 204) {
       throw Exception('No se pudo eliminar la publicación guardada');
     }
+  }
+
+  Future<List<Interest>> fetchInterests() async {
+    final response = await http.get(Uri.parse('$baseUrl/interests'));
+
+    if (response.statusCode != 200) {
+      throw Exception('No se pudieron cargar los intereses');
+    }
+
+    final data = jsonDecode(response.body) as List;
+
+    return data.map((item) => Interest.fromJson(item)).toList();
+  }
+
+  Future<List<Interest>> fetchUserInterests() async {
+    final response = await http.get(Uri.parse('$baseUrl/users/1/interests'));
+
+    if (response.statusCode != 200) {
+      throw Exception('No se pudieron cargar tus intereses');
+    }
+
+    final data = jsonDecode(response.body) as List;
+
+    return data.map((item) => Interest.fromJson(item)).toList();
+  }
+
+  Future<void> updateUserInterests(List<int> interestIds) async {
+    final response = await http.patch(
+      Uri.parse('$baseUrl/users/1/interests'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'interest_ids': interestIds}),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('No se pudieron actualizar los intereses');
+    }
+  }
+
+  Future<List<Post>> fetchPersonalizedFeed() async {
+    final response = await http.get(Uri.parse('$baseUrl/users/1/feed'));
+
+    if (response.statusCode != 200) {
+      throw Exception('No se pudo cargar el feed personalizado');
+    }
+
+    final data = jsonDecode(response.body) as List;
+
+    return data.map((item) => Post.fromJson(item)).toList();
   }
 }
