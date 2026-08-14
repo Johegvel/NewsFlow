@@ -10,12 +10,22 @@
 
 puts "Cargando datos iniciales..."
 
-johan = User.find_or_create_by!(email: "johan@newsflow.com") do |user|
+johan = User.find_or_initialize_by!(email: "johan@newsflow.com") do |user|
   user.name = "Johan Veloz"
+  user.password = "NewsFlow123!"
+  user.password_confirmation = "NewsFlow123!"
 end
 
-xavier = User.find_or_create_by!(email: "xavier@newsflow.com") do |user|
+xavier = User.find_or_initialize_by!(email: "xavier@newsflow.com") do |user|
   user.name = "Xavier Camacho"
+  user.password = "NewsFlow123!"
+  user.password_confirmation = "NewsFlow123!"
+end
+
+manuel = User.find_or_initialize_by!(email: "manuel@newsflow.com") do |user|
+  user.name = "Manuel Matute"
+  user.password = "NewsFlow123!"
+  user.password_confirmation = "NewsFlow123!"
 end
 
 tecnologia = Community.find_or_create_by!(slug: "tecnologia") do |community|
@@ -78,6 +88,21 @@ Post.find_or_create_by!(
   post.post_type = :discussion
   post.status = :published
   post.published_at = Time.current
+end
+
+interests = [
+  ["Tecnología", "tecnologia"],
+  ["Deportes", "deportes"],
+  ["Ciencia", "ciencia"],
+  ["Economía", "economia"],
+  ["Videojuegos", "videojuegos"],
+  ["Noticias locales", "noticias-locales"]
+]
+
+interests.each do |name, slug|
+  Interest.find_or_create_by!(slug: slug) do |interest|
+    interest.name = name
+  end
 end
 
 puts "Datos iniciales cargados correctamente."
