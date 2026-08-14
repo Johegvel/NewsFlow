@@ -1,8 +1,10 @@
 module Api
   module V1
     class UserInterestsController < ApplicationController
+      before_action :authenticate_user!, only: [:update]
+
       def show
-        user = User.find(params[:user_id])
+        user = current_user
 
         render json: user.interests
                          .order(:name)
@@ -10,7 +12,7 @@ module Api
       end
 
       def update
-        user = User.find(params[:user_id])
+        user = current_user 
         interest_ids = params.require(:interest_ids)
 
         user.transaction do

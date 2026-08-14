@@ -1,6 +1,8 @@
 module Api
   module V1
     class ReportsController < ApplicationController
+      before_action :authenticate_user!, only: [:index ,:create, :update]
+
       def index
         reports = if params[:post_id].present?
                     Post.find(params[:post_id]).reports
@@ -17,13 +19,12 @@ module Api
       def create
         post = Post.find(params[:post_id])
         report = post.reports.new(report_params)
+        report.user = current_user
 
         if report.save
-          render json: report_json(report), status: :created
+          render json: report, status: :created
         else
-          render json: {
-            errors: report.errors.full_messages
-          }, status: :unprocessable_entity
+          render json: { errors: report.errors.full_messages }, status: :unprocessable_entity
         end
       end
 
@@ -47,7 +48,7 @@ module Api
       private
 
       def report_params
-        params.require(:report).permit(:user_id, :reason)
+        params.require(:report).permit(:reason)
       end
 
       def update_params

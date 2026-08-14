@@ -2902,3 +2902,25 @@ Processing by Api::V1::ReactionsController#create as */*
 Completed 201 Created in 17ms (Views: 0.2ms | ActiveRecord: 4.5ms (5 queries, 1 cached) | GC: 0.0ms)
 
 
+Using vips to process variants requires the libvips library. Please install libvips using the instructions on the libvips website.
+Started GET "/api/v1/me/feed" for 127.0.0.1 at 2026-08-14 16:34:34 -0500
+  
+ActionController::RoutingError (No route matches [GET] "/api/v1/me/feed"):
+  
+Started GET "/api/v1/me/feed" for 127.0.0.1 at 2026-08-14 16:34:48 -0500
+  
+ActionController::RoutingError (No route matches [GET] "/api/v1/me/feed"):
+  
+Started GET "/api/v1/me/feed" for 127.0.0.1 at 2026-08-14 16:36:44 -0500
+  
+ActionController::RoutingError (No route matches [GET] "/api/v1/me/feed"):
+  
+Using vips to process variants requires the libvips library. Please install libvips using the instructions on the libvips website.
+Using vips to process variants requires the libvips library. Please install libvips using the instructions on the libvips website.
+Started GET "/api/v1/me/feed" for ::1 at 2026-08-14 16:41:07 -0500
+  [1m[36mActiveRecord::SchemaMigration Load (1.4ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='Backend'*/[0m
+Processing by Api::V1::FeedsController#show as */*
+Filter chain halted as :authenticate_user! rendered or redirected
+Completed 401 Unauthorized in 3ms (Views: 0.3ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+

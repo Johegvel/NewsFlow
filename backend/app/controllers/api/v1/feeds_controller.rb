@@ -1,8 +1,10 @@
 module Api
   module V1
     class FeedsController < ApplicationController
+      before_action :authenticate_user!
+
       def show
-        user = User.find(params[:user_id])
+        user = current_user
         topics = user.interests.pluck(:name).map(&:downcase)
 
         posts = Post.includes(:user, :community)

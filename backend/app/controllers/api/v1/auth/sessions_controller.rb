@@ -2,6 +2,8 @@ module Api
   module V1
     module Auth
       class SessionsController < ApplicationController
+        before_action :authenticate_user!, only: [:me]
+
         def create
           email = params[:email].to_s.strip.downcase
           user = User.find_by(email: email)
@@ -19,6 +21,7 @@ module Api
         end
 
         def me
+
           authenticate_user!
           return unless current_user
 

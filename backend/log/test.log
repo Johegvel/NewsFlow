@@ -153,3 +153,145 @@ PostTest: test_publicación_válida
   [1m[36mCommunity Create (0.3ms)[0m  [1m[32mINSERT INTO "communities" ("created_at", "description", "name", "slug", "topic", "updated_at") VALUES ($1, $2, $3, $4, $5, $6) RETURNING "id"[0m  [["created_at", "2026-08-13 00:40:30.590409"], ["description", nil], ["name", "Tecnología"], ["slug", "tecnologia"], ["topic", "Tecnología"], ["updated_at", "2026-08-13 00:40:30.590409"]]
   [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mRELEASE SAVEPOINT active_record_1[0m
   [1m[36mTRANSACTION (0.2ms)[0m  [1m[31mROLLBACK[0m
+Using vips to process variants requires the libvips library. Please install libvips using the instructions on the libvips website.
+  [1m[36mActiveRecord::InternalMetadata Load (20.2ms)[0m  [1m[34mSELECT * FROM "ar_internal_metadata" WHERE "ar_internal_metadata"."key" = $1 ORDER BY "ar_internal_metadata"."key" ASC LIMIT 1[0m  [[nil, "schema_sha1"]]
+Using vips to process variants requires the libvips library. Please install libvips using the instructions on the libvips website.
+  [1m[36mActiveRecord::SchemaMigration Load (4.2ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC[0m
+  [1m[36mActiveRecord::InternalMetadata Load (0.7ms)[0m  [1m[34mSELECT * FROM "ar_internal_metadata" WHERE "ar_internal_metadata"."key" = $1 ORDER BY "ar_internal_metadata"."key" ASC LIMIT 1[0m  [[nil, "environment"]]
+  [1m[36mActiveRecord::SchemaMigration Load (0.1ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC[0m
+  [1m[36mActiveRecord::InternalMetadata Load (0.2ms)[0m  [1m[34mSELECT * FROM "ar_internal_metadata" WHERE "ar_internal_metadata"."key" = $1 ORDER BY "ar_internal_metadata"."key" ASC LIMIT 1[0m  [[nil, "environment"]]
+  [1m[36mActiveRecord::SchemaMigration Load (0.1ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC[0m
+  [1m[36mActiveRecord::InternalMetadata Load (0.2ms)[0m  [1m[34mSELECT * FROM "ar_internal_metadata" WHERE "ar_internal_metadata"."key" = $1 ORDER BY "ar_internal_metadata"."key" ASC LIMIT 1[0m  [[nil, "environment"]]
+  [1m[35mSQL (0.1ms)[0m  [1m[35mSET search_path TO public[0m
+  [1m[35m (177.0ms)[0m  [1m[35mDROP DATABASE IF EXISTS "backend_test"[0m
+  [1m[35m (832.2ms)[0m  [1m[35mCREATE DATABASE "backend_test" ENCODING = 'unicode'[0m
+  [1m[35mSQL (23.8ms)[0m  [1m[35mCREATE EXTENSION IF NOT EXISTS "plpgsql" SCHEMA pg_catalog[0m
+  [1m[35m (1.8ms)[0m  [1m[35mDROP TABLE IF EXISTS "comments" CASCADE[0m
+  [1m[35m (17.2ms)[0m  [1m[35mCREATE TABLE "comments" ("id" bigserial primary key, "content" text, "created_at" timestamp(6) NOT NULL, "post_id" bigint NOT NULL, "updated_at" timestamp(6) NOT NULL, "user_id" bigint NOT NULL)[0m
+  [1m[35m (2.4ms)[0m  [1m[35mCREATE INDEX "index_comments_on_post_id" ON "comments" ("post_id")[0m
+  [1m[35m (0.6ms)[0m  [1m[35mCREATE INDEX "index_comments_on_user_id" ON "comments" ("user_id")[0m
+  [1m[35m (0.1ms)[0m  [1m[35mDROP TABLE IF EXISTS "communities" CASCADE[0m
+  [1m[35m (2.4ms)[0m  [1m[35mCREATE TABLE "communities" ("id" bigserial primary key, "created_at" timestamp(6) NOT NULL, "description" text, "name" character varying, "slug" character varying, "topic" character varying, "updated_at" timestamp(6) NOT NULL)[0m
+  [1m[35m (0.9ms)[0m  [1m[35mCREATE UNIQUE INDEX "index_communities_on_slug" ON "communities" ("slug")[0m
+  [1m[35m (0.1ms)[0m  [1m[35mDROP TABLE IF EXISTS "interests" CASCADE[0m
+  [1m[35m (5.7ms)[0m  [1m[35mCREATE TABLE "interests" ("id" bigserial primary key, "created_at" timestamp(6) NOT NULL, "name" character varying, "slug" character varying, "updated_at" timestamp(6) NOT NULL)[0m
+  [1m[35m (0.7ms)[0m  [1m[35mCREATE UNIQUE INDEX "index_interests_on_slug" ON "interests" ("slug")[0m
+  [1m[35m (0.1ms)[0m  [1m[35mDROP TABLE IF EXISTS "posts" CASCADE[0m
+  [1m[35m (5.5ms)[0m  [1m[35mCREATE TABLE "posts" ("id" bigserial primary key, "community_id" bigint NOT NULL, "content" text, "created_at" timestamp(6) NOT NULL, "post_type" integer, "published_at" timestamp(6), "status" integer, "title" character varying, "updated_at" timestamp(6) NOT NULL, "user_id" bigint NOT NULL)[0m
+  [1m[35m (2.6ms)[0m  [1m[35mCREATE INDEX "index_posts_on_community_id" ON "posts" ("community_id")[0m
+  [1m[35m (2.6ms)[0m  [1m[35mCREATE INDEX "index_posts_on_user_id" ON "posts" ("user_id")[0m
+  [1m[35m (0.1ms)[0m  [1m[35mDROP TABLE IF EXISTS "reactions" CASCADE[0m
+  [1m[35m (3.6ms)[0m  [1m[35mCREATE TABLE "reactions" ("id" bigserial primary key, "created_at" timestamp(6) NOT NULL, "kind" integer, "post_id" bigint NOT NULL, "updated_at" timestamp(6) NOT NULL, "user_id" bigint NOT NULL)[0m
+  [1m[35m (2.0ms)[0m  [1m[35mCREATE INDEX "index_reactions_on_post_id" ON "reactions" ("post_id")[0m
+  [1m[35m (0.7ms)[0m  [1m[35mCREATE INDEX "index_reactions_on_user_id" ON "reactions" ("user_id")[0m
+  [1m[35m (0.2ms)[0m  [1m[35mDROP TABLE IF EXISTS "reports" CASCADE[0m
+  [1m[35m (5.2ms)[0m  [1m[35mCREATE TABLE "reports" ("id" bigserial primary key, "created_at" timestamp(6) NOT NULL, "post_id" bigint NOT NULL, "reason" text, "reviewed_at" timestamp(6), "status" integer, "updated_at" timestamp(6) NOT NULL, "user_id" bigint NOT NULL)[0m
+  [1m[35m (0.9ms)[0m  [1m[35mCREATE INDEX "index_reports_on_post_id" ON "reports" ("post_id")[0m
+  [1m[35m (0.9ms)[0m  [1m[35mCREATE INDEX "index_reports_on_user_id" ON "reports" ("user_id")[0m
+  [1m[35m (0.3ms)[0m  [1m[35mDROP TABLE IF EXISTS "saved_posts" CASCADE[0m
+  [1m[35m (5.5ms)[0m  [1m[35mCREATE TABLE "saved_posts" ("id" bigserial primary key, "created_at" timestamp(6) NOT NULL, "post_id" bigint NOT NULL, "updated_at" timestamp(6) NOT NULL, "user_id" bigint NOT NULL)[0m
+  [1m[35m (1.3ms)[0m  [1m[35mCREATE INDEX "index_saved_posts_on_post_id" ON "saved_posts" ("post_id")[0m
+  [1m[35m (1.0ms)[0m  [1m[35mCREATE INDEX "index_saved_posts_on_user_id" ON "saved_posts" ("user_id")[0m
+  [1m[35m (0.2ms)[0m  [1m[35mDROP TABLE IF EXISTS "user_interests" CASCADE[0m
+  [1m[35m (3.0ms)[0m  [1m[35mCREATE TABLE "user_interests" ("id" bigserial primary key, "created_at" timestamp(6) NOT NULL, "interest_id" bigint NOT NULL, "updated_at" timestamp(6) NOT NULL, "user_id" bigint NOT NULL)[0m
+  [1m[35m (0.8ms)[0m  [1m[35mCREATE INDEX "index_user_interests_on_interest_id" ON "user_interests" ("interest_id")[0m
+  [1m[35m (0.6ms)[0m  [1m[35mCREATE UNIQUE INDEX "index_user_interests_on_user_id_and_interest_id" ON "user_interests" ("user_id", "interest_id")[0m
+  [1m[35m (0.6ms)[0m  [1m[35mCREATE INDEX "index_user_interests_on_user_id" ON "user_interests" ("user_id")[0m
+  [1m[35m (0.1ms)[0m  [1m[35mDROP TABLE IF EXISTS "users" CASCADE[0m
+  [1m[35m (2.5ms)[0m  [1m[35mCREATE TABLE "users" ("id" bigserial primary key, "created_at" timestamp(6) NOT NULL, "email" character varying, "name" character varying, "password_digest" character varying, "updated_at" timestamp(6) NOT NULL)[0m
+  [1m[35m (1.1ms)[0m  [1m[35mCREATE UNIQUE INDEX "index_users_on_email" ON "users" ("email")[0m
+  [1m[35m (7.3ms)[0m  [1m[35mALTER TABLE "comments" ADD CONSTRAINT "fk_rails_2fd19c0db7"
+FOREIGN KEY ("post_id")
+  REFERENCES "posts" ("id")
+[0m
+  [1m[35m (1.1ms)[0m  [1m[35mALTER TABLE "comments" ADD CONSTRAINT "fk_rails_03de2dc08c"
+FOREIGN KEY ("user_id")
+  REFERENCES "users" ("id")
+[0m
+  [1m[35m (1.2ms)[0m  [1m[35mALTER TABLE "posts" ADD CONSTRAINT "fk_rails_e070049175"
+FOREIGN KEY ("community_id")
+  REFERENCES "communities" ("id")
+[0m
+  [1m[35m (2.1ms)[0m  [1m[35mALTER TABLE "posts" ADD CONSTRAINT "fk_rails_5b5ddfd518"
+FOREIGN KEY ("user_id")
+  REFERENCES "users" ("id")
+[0m
+  [1m[35m (1.0ms)[0m  [1m[35mALTER TABLE "reactions" ADD CONSTRAINT "fk_rails_cb32010de7"
+FOREIGN KEY ("post_id")
+  REFERENCES "posts" ("id")
+[0m
+  [1m[35m (1.8ms)[0m  [1m[35mALTER TABLE "reactions" ADD CONSTRAINT "fk_rails_9f02fc96a0"
+FOREIGN KEY ("user_id")
+  REFERENCES "users" ("id")
+[0m
+  [1m[35m (2.2ms)[0m  [1m[35mALTER TABLE "reports" ADD CONSTRAINT "fk_rails_632f1a92b7"
+FOREIGN KEY ("post_id")
+  REFERENCES "posts" ("id")
+[0m
+  [1m[35m (0.9ms)[0m  [1m[35mALTER TABLE "reports" ADD CONSTRAINT "fk_rails_c7699d537d"
+FOREIGN KEY ("user_id")
+  REFERENCES "users" ("id")
+[0m
+  [1m[35m (1.4ms)[0m  [1m[35mALTER TABLE "saved_posts" ADD CONSTRAINT "fk_rails_0ac65331e7"
+FOREIGN KEY ("post_id")
+  REFERENCES "posts" ("id")
+[0m
+  [1m[35m (1.0ms)[0m  [1m[35mALTER TABLE "saved_posts" ADD CONSTRAINT "fk_rails_afdf46603a"
+FOREIGN KEY ("user_id")
+  REFERENCES "users" ("id")
+[0m
+  [1m[35m (3.1ms)[0m  [1m[35mALTER TABLE "user_interests" ADD CONSTRAINT "fk_rails_5630a14e4d"
+FOREIGN KEY ("interest_id")
+  REFERENCES "interests" ("id")
+[0m
+  [1m[35m (0.9ms)[0m  [1m[35mALTER TABLE "user_interests" ADD CONSTRAINT "fk_rails_ec759c020c"
+FOREIGN KEY ("user_id")
+  REFERENCES "users" ("id")
+[0m
+  [1m[35m (1.7ms)[0m  [1m[35mCREATE TABLE "schema_migrations" ("version" character varying NOT NULL PRIMARY KEY)[0m
+  [1m[36mActiveRecord::SchemaMigration Load (0.7ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC[0m
+  [1m[35m (0.7ms)[0m  [1m[32mINSERT INTO "schema_migrations" (version) VALUES (20260814200948)[0m
+  [1m[35m (0.6ms)[0m  [1m[32mINSERT INTO "schema_migrations" (version) VALUES
+(20260814193756),
+(20260814193749),
+(20260814193747),
+(20260813022015),
+(20260813013342),
+(20260813002847),
+(20260813002846),
+(20260813002845),
+(20260813002844),
+(20260813002843);[0m
+  [1m[35m (2.1ms)[0m  [1m[35mCREATE TABLE "ar_internal_metadata" ("key" character varying NOT NULL PRIMARY KEY, "value" character varying, "created_at" timestamp(6) NOT NULL, "updated_at" timestamp(6) NOT NULL)[0m
+  [1m[36mActiveRecord::InternalMetadata Load (0.7ms)[0m  [1m[34mSELECT * FROM "ar_internal_metadata" WHERE "ar_internal_metadata"."key" = $1 ORDER BY "ar_internal_metadata"."key" ASC LIMIT 1[0m  [[nil, "environment"]]
+  [1m[36mActiveRecord::InternalMetadata Create (0.6ms)[0m  [1m[32mINSERT INTO "ar_internal_metadata" ("key", "value", "created_at", "updated_at") VALUES ('environment', 'test', '2026-08-14 21:34:14.529758', '2026-08-14 21:34:14.529761') RETURNING "key"[0m
+  [1m[36mActiveRecord::InternalMetadata Load (0.2ms)[0m  [1m[34mSELECT * FROM "ar_internal_metadata" WHERE "ar_internal_metadata"."key" = $1 ORDER BY "ar_internal_metadata"."key" ASC LIMIT 1[0m  [[nil, "environment"]]
+  [1m[36mActiveRecord::InternalMetadata Load (0.2ms)[0m  [1m[34mSELECT * FROM "ar_internal_metadata" WHERE "ar_internal_metadata"."key" = $1 ORDER BY "ar_internal_metadata"."key" ASC LIMIT 1[0m  [[nil, "schema_sha1"]]
+  [1m[36mActiveRecord::InternalMetadata Create (0.3ms)[0m  [1m[32mINSERT INTO "ar_internal_metadata" ("key", "value", "created_at", "updated_at") VALUES ('schema_sha1', 'd1af6da9a68d28e9e95499a69000ba796465cc1d', '2026-08-14 21:34:14.532447', '2026-08-14 21:34:14.532449') RETURNING "key"[0m
+  [1m[36mActiveRecord::SchemaMigration Load (1.2ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC[0m
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN[0m
+---------------------------------
+PostTest: test_publicación_válida
+---------------------------------
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mSAVEPOINT active_record_1[0m
+  [1m[36mUser Exists? (1.5ms)[0m  [1m[34mSELECT 1 AS one FROM "users" WHERE "users"."email" = $1 LIMIT $2[0m  [["email", "[FILTERED]"], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.5ms)[0m  [1m[31mROLLBACK TO SAVEPOINT active_record_1[0m
+  [1m[36mTRANSACTION (0.7ms)[0m  [1m[31mROLLBACK[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+------------------------------------
+CommunityTest: test_comunidad_válida
+------------------------------------
+  [1m[36mCommunity Exists? (2.6ms)[0m  [1m[34mSELECT 1 AS one FROM "communities" WHERE "communities"."slug" = $1 LIMIT $2[0m  [["slug", "tecnologia"], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.3ms)[0m  [1m[31mROLLBACK[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+-------------------------------------------------
+UserTest: test_usuario_válido_con_nombre_y_correo
+-------------------------------------------------
+  [1m[36mUser Exists? (0.3ms)[0m  [1m[34mSELECT 1 AS one FROM "users" WHERE "users"."email" = $1 LIMIT $2[0m  [["email", "[FILTERED]"], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[31mROLLBACK[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+---------------------------------------------
+UserTest: test_correo_electrónico_obligatorio
+---------------------------------------------
+  [1m[36mUser Exists? (0.3ms)[0m  [1m[34mSELECT 1 AS one FROM "users" WHERE "users"."email" IS NULL LIMIT $1[0m  [["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[31mROLLBACK[0m
