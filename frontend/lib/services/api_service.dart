@@ -9,6 +9,7 @@ import '../models/reaction.dart';
 import '../models/report.dart';
 import '../models/saved_post.dart';
 import '../models/interest.dart';
+import 'auth_service.dart';
 
 class ApiService {
   static const String baseUrl = 'http://127.0.0.1:3000/api/v1';
@@ -64,9 +65,9 @@ class ApiService {
   Future<Comment> createComment(int postId, String content) async {
     final response = await http.post(
       Uri.parse('$baseUrl/posts/$postId/comments'),
-      headers: {'Content-Type': 'application/json'},
+      headers: await AuthService.authHeaders(json: true),
       body: jsonEncode({
-        'comment': {'user_id': 1, 'content': content},
+        'comment': {'content': content},
       }),
     );
 
@@ -80,9 +81,9 @@ class ApiService {
   Future<Reaction> createReaction(int postId) async {
     final response = await http.post(
       Uri.parse('$baseUrl/posts/$postId/reactions'),
-      headers: {'Content-Type': 'application/json'},
+      headers: await AuthService.authHeaders(json: true),
       body: jsonEncode({
-        'reaction': {'user_id': 1, 'kind': 'like'},
+        'reaction': {'kind': 'like'},
       }),
     );
 
@@ -101,10 +102,9 @@ class ApiService {
   }) async {
     final response = await http.post(
       Uri.parse('$baseUrl/communities/$communityId/posts'),
-      headers: {'Content-Type': 'application/json'},
+      headers: await AuthService.authHeaders(json: true),
       body: jsonEncode({
         'post': {
-          'user_id': 1,
           'title': title,
           'content': content,
           'post_type': postType,

@@ -31,7 +31,7 @@ class AuthService {
     }
 
     final data = jsonDecode(response.body);
-    await saveToken(data['token']);
+    await saveSession(data['token'], data['user']['id']);
   }
 
   Future<void> login({required String email, required String password}) async {
@@ -46,7 +46,7 @@ class AuthService {
     }
 
     final data = jsonDecode(response.body);
-    await saveToken(data['token']);
+    await saveSession(data['token'], data['user']['id']);
   }
 
   Future<void> saveToken(String token) async {
@@ -65,6 +65,29 @@ class AuthService {
 
   static Future<void> logout() async {
     final preferences = await SharedPreferences.getInstance();
+
     await preferences.remove(tokenKey);
+    await preferences.remove('user_id');
+  }
+
+  Future<void> saveSession(String token, int userId) async {
+    final preferences = await SharedPreferences.getInstance();
+
+    await preferences.setString(tokenKey, token);
+    await preferences.setInt('user_id', userId);
+  }
+
+  static Future<Map<String, String>> authHeaders({bool json = false}) async {
+    final token = await getToken();
+
+    return {
+      if (json) 'Content-Type': 'application/json',
+      if (token != null) 'Authorization': 'Bearer $token',
+    };
+  }
+
+  static Future<int?> getUserId() async {
+    final preferences = await SharedPreferences.getInstance();
+    return preferences.getInt('user_id');
   }
 }

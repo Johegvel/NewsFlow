@@ -2529,3 +2529,376 @@ Processing by Api::V1::Auth::SessionsController#me as */*
 Completed 200 OK in 3ms (Views: 0.1ms | ActiveRecord: 0.5ms (1 query, 0 cached) | GC: 0.0ms)
 
 
+Started POST "/api/v1/auth/login" for 127.0.0.1 at 2026-08-14 15:27:35 -0500
+Processing by Api::V1::Auth::SessionsController#create as */*
+  Parameters: {"email" => "[FILTERED]", "password" => "[FILTERED]", "session" => {"email" => "[FILTERED]", "password" => "[FILTERED]"}}
+  [1m[36mUser Load (3.2ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."email" = 'johan@newsflow.com' LIMIT 1 /*action='create',application='Backend',controller='sessions'*/[0m
+  ↳ app/controllers/api/v1/auth/sessions_controller.rb:7:in 'Api::V1::Auth::SessionsController#create'
+Completed 200 OK in 315ms (Views: 1.0ms | ActiveRecord: 23.0ms (1 query, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/api/v1/communities" for 127.0.0.1 at 2026-08-14 15:27:35 -0500
+Started GET "/api/v1/users/1/feed" for 127.0.0.1 at 2026-08-14 15:27:35 -0500
+Processing by Api::V1::FeedsController#show as */*
+  Parameters: {"user_id" => "1"}
+  [1m[36mUser Load (1.6ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = 1 LIMIT 1 /*action='show',application='Backend',controller='feeds'*/[0m
+  ↳ app/controllers/api/v1/feeds_controller.rb:5:in 'Api::V1::FeedsController#show'
+Processing by Api::V1::CommunitiesController#index as */*
+  [1m[36mInterest Pluck (4.3ms)[0m  [1m[34mSELECT "interests"."name" FROM "interests" INNER JOIN "user_interests" ON "interests"."id" = "user_interests"."interest_id" WHERE "user_interests"."user_id" = 1 /*action='show',application='Backend',controller='feeds'*/[0m
+  ↳ app/controllers/api/v1/feeds_controller.rb:6:in 'Api::V1::FeedsController#show'
+  [1m[36mCommunity Load (2.3ms)[0m  [1m[34mSELECT "communities".* FROM "communities" ORDER BY "communities"."created_at" DESC /*action='index',application='Backend',controller='communities'*/[0m
+  ↳ app/controllers/api/v1/communities_controller.rb:7:in 'Enumerable#map'
+  [1m[36mPost Load (1.9ms)[0m  [1m[34mSELECT "posts".* FROM "posts" WHERE "posts"."status" = 1 ORDER BY "posts"."created_at" DESC /*action='show',application='Backend',controller='feeds'*/[0m
+  ↳ app/controllers/api/v1/feeds_controller.rb:12:in 'Enumerable#sort_by'
+  [1m[36mUser Load (1.3ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" IN (1, 2) /*action='show',application='Backend',controller='feeds'*/[0m
+  ↳ app/controllers/api/v1/feeds_controller.rb:12:in 'Enumerable#sort_by'
+  [1m[36mPost Count (1.8ms)[0m  [1m[34mSELECT COUNT(*) FROM "posts" WHERE "posts"."community_id" = 3 /*action='index',application='Backend',controller='communities'*/[0m
+  ↳ app/controllers/api/v1/communities_controller.rb:34:in 'Api::V1::CommunitiesController#community_json'
+  [1m[36mCommunity Load (1.3ms)[0m  [1m[34mSELECT "communities".* FROM "communities" WHERE "communities"."id" IN (1, 3, 2) /*action='show',application='Backend',controller='feeds'*/[0m
+  ↳ app/controllers/api/v1/feeds_controller.rb:12:in 'Enumerable#sort_by'
+Completed 200 OK in 252ms (Views: 0.8ms | ActiveRecord: 30.6ms (5 queries, 0 cached) | GC: 0.0ms)
+
+
+  [1m[36mPost Count (4.4ms)[0m  [1m[34mSELECT COUNT(*) FROM "posts" WHERE "posts"."community_id" = 2 /*action='index',application='Backend',controller='communities'*/[0m
+  ↳ app/controllers/api/v1/communities_controller.rb:34:in 'Api::V1::CommunitiesController#community_json'
+  [1m[36mPost Count (0.3ms)[0m  [1m[34mSELECT COUNT(*) FROM "posts" WHERE "posts"."community_id" = 1 /*action='index',application='Backend',controller='communities'*/[0m
+  ↳ app/controllers/api/v1/communities_controller.rb:34:in 'Api::V1::CommunitiesController#community_json'
+Completed 200 OK in 80ms (Views: 0.1ms | ActiveRecord: 52.2ms (4 queries, 0 cached) | GC: 0.0ms)
+
+
+Using vips to process variants requires the libvips library. Please install libvips using the instructions on the libvips website.
+Started POST "/api/v1/auth/login" for 127.0.0.1 at 2026-08-14 15:49:09 -0500
+  [1m[36mActiveRecord::SchemaMigration Load (2.3ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='Backend'*/[0m
+Processing by Api::V1::Auth::SessionsController#create as */*
+  Parameters: {"email" => "[FILTERED]", "password" => "[FILTERED]", "session" => {"email" => "[FILTERED]", "password" => "[FILTERED]"}}
+  [1m[36mUser Load (3.1ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."email" = 'johan@newsflow.com' LIMIT 1 /*action='create',application='Backend',controller='sessions'*/[0m
+  ↳ app/controllers/api/v1/auth/sessions_controller.rb:7:in 'Api::V1::Auth::SessionsController#create'
+Completed 200 OK in 296ms (Views: 0.2ms | ActiveRecord: 15.3ms (1 query, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/api/v1/users/1/feed" for 127.0.0.1 at 2026-08-14 15:49:10 -0500
+Started GET "/api/v1/communities" for 127.0.0.1 at 2026-08-14 15:49:10 -0500
+Processing by Api::V1::FeedsController#show as */*
+  Parameters: {"user_id" => "1"}
+Processing by Api::V1::CommunitiesController#index as */*
+  [1m[36mUser Load (3.8ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = 1 LIMIT 1 /*action='show',application='Backend',controller='feeds'*/[0m
+  ↳ app/controllers/api/v1/feeds_controller.rb:5:in 'Api::V1::FeedsController#show'
+  [1m[36mInterest Pluck (6.4ms)[0m  [1m[34mSELECT "interests"."name" FROM "interests" INNER JOIN "user_interests" ON "interests"."id" = "user_interests"."interest_id" WHERE "user_interests"."user_id" = 1 /*action='show',application='Backend',controller='feeds'*/[0m
+  ↳ app/controllers/api/v1/feeds_controller.rb:6:in 'Api::V1::FeedsController#show'
+  [1m[36mCommunity Load (1.7ms)[0m  [1m[34mSELECT "communities".* FROM "communities" ORDER BY "communities"."created_at" DESC /*action='index',application='Backend',controller='communities'*/[0m
+  ↳ app/controllers/api/v1/communities_controller.rb:7:in 'Enumerable#map'
+  [1m[36mPost Load (1.7ms)[0m  [1m[34mSELECT "posts".* FROM "posts" WHERE "posts"."status" = 1 ORDER BY "posts"."created_at" DESC /*action='show',application='Backend',controller='feeds'*/[0m
+  ↳ app/controllers/api/v1/feeds_controller.rb:12:in 'Enumerable#sort_by'
+  [1m[36mUser Load (1.4ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" IN (1, 2) /*action='show',application='Backend',controller='feeds'*/[0m
+  ↳ app/controllers/api/v1/feeds_controller.rb:12:in 'Enumerable#sort_by'
+  [1m[36mPost Count (3.7ms)[0m  [1m[34mSELECT COUNT(*) FROM "posts" WHERE "posts"."community_id" = 3 /*action='index',application='Backend',controller='communities'*/[0m
+  ↳ app/controllers/api/v1/communities_controller.rb:34:in 'Api::V1::CommunitiesController#community_json'
+  [1m[36mCommunity Load (2.0ms)[0m  [1m[34mSELECT "communities".* FROM "communities" WHERE "communities"."id" IN (1, 3, 2) /*action='show',application='Backend',controller='feeds'*/[0m
+  ↳ app/controllers/api/v1/feeds_controller.rb:12:in 'Enumerable#sort_by'
+Completed 200 OK in 130ms (Views: 0.3ms | ActiveRecord: 25.4ms (5 queries, 0 cached) | GC: 28.9ms)
+
+
+  [1m[36mPost Count (6.1ms)[0m  [1m[34mSELECT COUNT(*) FROM "posts" WHERE "posts"."community_id" = 2 /*action='index',application='Backend',controller='communities'*/[0m
+  ↳ app/controllers/api/v1/communities_controller.rb:34:in 'Api::V1::CommunitiesController#community_json'
+  [1m[36mPost Count (0.4ms)[0m  [1m[34mSELECT COUNT(*) FROM "posts" WHERE "posts"."community_id" = 1 /*action='index',application='Backend',controller='communities'*/[0m
+  ↳ app/controllers/api/v1/communities_controller.rb:34:in 'Api::V1::CommunitiesController#community_json'
+Completed 200 OK in 130ms (Views: 0.1ms | ActiveRecord: 52.4ms (4 queries, 0 cached) | GC: 28.9ms)
+
+
+Started POST "/api/v1/communities/1/posts" for 127.0.0.1 at 2026-08-14 15:49:32 -0500
+  
+NoMethodError (undefined method 'before_action' for module Api::V1):
+  
+app/controllers/api/v1/posts_controller.rb:3:in '<module:V1>'
+app/controllers/api/v1/posts_controller.rb:2:in '<module:Api>'
+app/controllers/api/v1/posts_controller.rb:1:in '<main>'
+Started POST "/api/v1/communities/1/posts" for 127.0.0.1 at 2026-08-14 15:49:36 -0500
+  
+NoMethodError (undefined method 'before_action' for module Api::V1):
+  
+app/controllers/api/v1/posts_controller.rb:3:in '<module:V1>'
+app/controllers/api/v1/posts_controller.rb:2:in '<module:Api>'
+app/controllers/api/v1/posts_controller.rb:1:in '<main>'
+Started POST "/api/v1/communities/3/posts" for 127.0.0.1 at 2026-08-14 15:49:48 -0500
+  
+NoMethodError (undefined method 'before_action' for module Api::V1):
+  
+app/controllers/api/v1/posts_controller.rb:3:in '<module:V1>'
+app/controllers/api/v1/posts_controller.rb:2:in '<module:Api>'
+app/controllers/api/v1/posts_controller.rb:1:in '<main>'
+Started POST "/api/v1/communities/3/posts" for 127.0.0.1 at 2026-08-14 15:49:59 -0500
+  
+NoMethodError (undefined method 'before_action' for module Api::V1):
+  
+app/controllers/api/v1/posts_controller.rb:3:in '<module:V1>'
+app/controllers/api/v1/posts_controller.rb:2:in '<module:Api>'
+app/controllers/api/v1/posts_controller.rb:1:in '<main>'
+Using vips to process variants requires the libvips library. Please install libvips using the instructions on the libvips website.
+Started POST "/api/v1/communities/3/posts" for 127.0.0.1 at 2026-08-14 15:58:39 -0500
+  [1m[36mActiveRecord::SchemaMigration Load (1.0ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='Backend'*/[0m
+Processing by Api::V1::PostsController#create as */*
+  Parameters: {"post" => {"title" => "Prueba 2", "content" => "Prueba de la Prueba  de la prueba", "post_type" => "opinion", "status" => "published"}, "community_id" => "3"}
+  [1m[36mUser Load (1.7ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = 1 LIMIT 1 /*action='create',application='Backend',controller='posts'*/[0m
+  ↳ app/controllers/application_controller.rb:8:in 'ApplicationController#current_user'
+  [1m[36mTRANSACTION (6.5ms)[0m  [1m[35mBEGIN /*action='create',application='Backend',controller='posts'*/[0m
+  ↳ app/controllers/api/v1/posts_controller.rb:34:in 'Api::V1::PostsController#create'
+  [1m[36mCommunity Load (5.4ms)[0m  [1m[34mSELECT "communities".* FROM "communities" WHERE "communities"."id" = 3 LIMIT 1 /*action='create',application='Backend',controller='posts'*/[0m
+  ↳ app/controllers/api/v1/posts_controller.rb:34:in 'Api::V1::PostsController#create'
+  [1m[36mPost Create (75.1ms)[0m  [1m[32mINSERT INTO "posts" ("user_id", "community_id", "title", "content", "post_type", "status", "published_at", "created_at", "updated_at") VALUES (1, 3, 'Prueba 2', 'Prueba de la Prueba  de la prueba', 2, 1, NULL, '2026-08-14 20:58:40.032532', '2026-08-14 20:58:40.032532') RETURNING "id" /*action='create',application='Backend',controller='posts'*/[0m
+  ↳ app/controllers/api/v1/posts_controller.rb:34:in 'Api::V1::PostsController#create'
+  [1m[36mTRANSACTION (9.5ms)[0m  [1m[35mCOMMIT /*action='create',application='Backend',controller='posts'*/[0m
+  ↳ app/controllers/api/v1/posts_controller.rb:34:in 'Api::V1::PostsController#create'
+Completed 201 Created in 382ms (Views: 0.3ms | ActiveRecord: 174.2ms (3 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/api/v1/users/1/feed" for 127.0.0.1 at 2026-08-14 15:58:40 -0500
+Started GET "/api/v1/communities" for 127.0.0.1 at 2026-08-14 15:58:40 -0500
+Processing by Api::V1::FeedsController#show as */*
+  Parameters: {"user_id" => "1"}
+Processing by Api::V1::CommunitiesController#index as */*
+  [1m[36mUser Load (9.2ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = 1 LIMIT 1 /*action='show',application='Backend',controller='feeds'*/[0m
+  ↳ app/controllers/api/v1/feeds_controller.rb:5:in 'Api::V1::FeedsController#show'
+  [1m[36mInterest Pluck (3.0ms)[0m  [1m[34mSELECT "interests"."name" FROM "interests" INNER JOIN "user_interests" ON "interests"."id" = "user_interests"."interest_id" WHERE "user_interests"."user_id" = 1 /*action='show',application='Backend',controller='feeds'*/[0m
+  ↳ app/controllers/api/v1/feeds_controller.rb:6:in 'Api::V1::FeedsController#show'
+  [1m[36mPost Load (1.5ms)[0m  [1m[34mSELECT "posts".* FROM "posts" WHERE "posts"."status" = 1 ORDER BY "posts"."created_at" DESC /*action='show',application='Backend',controller='feeds'*/[0m
+  ↳ app/controllers/api/v1/feeds_controller.rb:12:in 'Enumerable#sort_by'
+  [1m[36mUser Load (0.5ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" IN (1, 2) /*action='show',application='Backend',controller='feeds'*/[0m
+  ↳ app/controllers/api/v1/feeds_controller.rb:12:in 'Enumerable#sort_by'
+  [1m[36mCommunity Load (0.6ms)[0m  [1m[34mSELECT "communities".* FROM "communities" WHERE "communities"."id" IN (3, 1, 2) /*action='show',application='Backend',controller='feeds'*/[0m
+  ↳ app/controllers/api/v1/feeds_controller.rb:12:in 'Enumerable#sort_by'
+Completed 200 OK in 71ms (Views: 0.2ms | ActiveRecord: 18.3ms (5 queries, 0 cached) | GC: 0.0ms)
+
+
+  [1m[36mCommunity Load (63.6ms)[0m  [1m[34mSELECT "communities".* FROM "communities" ORDER BY "communities"."created_at" DESC /*action='index',application='Backend',controller='communities'*/[0m
+  ↳ app/controllers/api/v1/communities_controller.rb:7:in 'Enumerable#map'
+  [1m[36mPost Count (0.7ms)[0m  [1m[34mSELECT COUNT(*) FROM "posts" WHERE "posts"."community_id" = 3 /*action='index',application='Backend',controller='communities'*/[0m
+  ↳ app/controllers/api/v1/communities_controller.rb:34:in 'Api::V1::CommunitiesController#community_json'
+  [1m[36mPost Count (0.3ms)[0m  [1m[34mSELECT COUNT(*) FROM "posts" WHERE "posts"."community_id" = 2 /*action='index',application='Backend',controller='communities'*/[0m
+  ↳ app/controllers/api/v1/communities_controller.rb:34:in 'Api::V1::CommunitiesController#community_json'
+  [1m[36mPost Count (0.2ms)[0m  [1m[34mSELECT COUNT(*) FROM "posts" WHERE "posts"."community_id" = 1 /*action='index',application='Backend',controller='communities'*/[0m
+  ↳ app/controllers/api/v1/communities_controller.rb:34:in 'Api::V1::CommunitiesController#community_json'
+Completed 200 OK in 71ms (Views: 0.2ms | ActiveRecord: 103.1ms (4 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/api/v1/posts/8/comments" for 127.0.0.1 at 2026-08-14 15:58:43 -0500
+Processing by Api::V1::CommentsController#index as */*
+  Parameters: {"post_id" => "8"}
+  [1m[36mPost Load (0.4ms)[0m  [1m[34mSELECT "posts".* FROM "posts" WHERE "posts"."id" = 8 LIMIT 1 /*action='index',application='Backend',controller='comments'*/[0m
+  ↳ app/controllers/api/v1/comments_controller.rb:29:in 'Api::V1::CommentsController#set_post'
+  [1m[36mComment Load (0.6ms)[0m  [1m[34mSELECT "comments".* FROM "comments" WHERE "comments"."post_id" = 8 ORDER BY "comments"."created_at" ASC /*action='index',application='Backend',controller='comments'*/[0m
+  ↳ app/controllers/api/v1/comments_controller.rb:11:in 'Enumerable#map'
+Completed 200 OK in 12ms (Views: 0.1ms | ActiveRecord: 4.4ms (2 queries, 0 cached) | GC: 0.0ms)
+
+
+Using vips to process variants requires the libvips library. Please install libvips using the instructions on the libvips website.
+Started POST "/api/v1/posts/8/comments" for 127.0.0.1 at 2026-08-14 16:08:42 -0500
+  [1m[36mActiveRecord::SchemaMigration Load (0.9ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='Backend'*/[0m
+Processing by Api::V1::CommentsController#create as */*
+  Parameters: {"comment" => {"user_id" => 1, "content" => "mala publicacion"}, "post_id" => "8"}
+  [1m[36mPost Load (1.1ms)[0m  [1m[34mSELECT "posts".* FROM "posts" WHERE "posts"."id" = 8 LIMIT 1 /*action='create',application='Backend',controller='comments'*/[0m
+  ↳ app/controllers/api/v1/comments_controller.rb:32:in 'Api::V1::CommentsController#set_post'
+Filter chain halted as :authenticate_user! rendered or redirected
+Completed 401 Unauthorized in 139ms (Views: 0.3ms | ActiveRecord: 46.0ms (1 query, 0 cached) | GC: 0.0ms)
+
+
+Started POST "/api/v1/posts/8/reactions" for 127.0.0.1 at 2026-08-14 16:08:45 -0500
+Processing by Api::V1::ReactionsController#create as */*
+  Parameters: {"reaction" => {"user_id" => 1, "kind" => "like"}, "post_id" => "8"}
+  [1m[36mPost Load (0.5ms)[0m  [1m[34mSELECT "posts".* FROM "posts" WHERE "posts"."id" = 8 LIMIT 1 /*action='create',application='Backend',controller='reactions'*/[0m
+  ↳ app/controllers/api/v1/reactions_controller.rb:41:in 'Api::V1::ReactionsController#set_post'
+Filter chain halted as :authenticate_user! rendered or redirected
+Completed 401 Unauthorized in 2ms (Views: 0.1ms | ActiveRecord: 0.5ms (1 query, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/api/v1/users/1/feed" for 127.0.0.1 at 2026-08-14 16:08:55 -0500
+Started GET "/api/v1/communities" for 127.0.0.1 at 2026-08-14 16:08:55 -0500
+Processing by Api::V1::FeedsController#show as */*
+  Parameters: {"user_id" => "1"}
+Processing by Api::V1::CommunitiesController#index as */*
+  [1m[36mUser Load (2.8ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = 1 LIMIT 1 /*action='show',application='Backend',controller='feeds'*/[0m
+  ↳ app/controllers/api/v1/feeds_controller.rb:5:in 'Api::V1::FeedsController#show'
+  [1m[36mInterest Pluck (14.0ms)[0m  [1m[34mSELECT "interests"."name" FROM "interests" INNER JOIN "user_interests" ON "interests"."id" = "user_interests"."interest_id" WHERE "user_interests"."user_id" = 1 /*action='show',application='Backend',controller='feeds'*/[0m
+  ↳ app/controllers/api/v1/feeds_controller.rb:6:in 'Api::V1::FeedsController#show'
+  [1m[36mPost Load (1.4ms)[0m  [1m[34mSELECT "posts".* FROM "posts" WHERE "posts"."status" = 1 ORDER BY "posts"."created_at" DESC /*action='show',application='Backend',controller='feeds'*/[0m
+  ↳ app/controllers/api/v1/feeds_controller.rb:12:in 'Enumerable#sort_by'
+  [1m[36mCommunity Load (76.9ms)[0m  [1m[34mSELECT "communities".* FROM "communities" ORDER BY "communities"."created_at" DESC /*action='index',application='Backend',controller='communities'*/[0m
+  [1m[36mUser Load (0.4ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" IN (1, 2) /*action='show',application='Backend',controller='feeds'*/[0m
+  ↳ app/controllers/api/v1/communities_controller.rb:7:in 'Enumerable#map'
+  ↳ app/controllers/api/v1/feeds_controller.rb:12:in 'Enumerable#sort_by'
+  [1m[36mCommunity Load (0.8ms)[0m  [1m[34mSELECT "communities".* FROM "communities" WHERE "communities"."id" IN (3, 1, 2) /*action='show',application='Backend',controller='feeds'*/[0m
+  ↳ app/controllers/api/v1/feeds_controller.rb:12:in 'Enumerable#sort_by'
+Completed 200 OK in 513ms (Views: 1.0ms | ActiveRecord: 62.8ms (5 queries, 0 cached) | GC: 0.0ms)
+
+
+  [1m[36mPost Count (13.7ms)[0m  [1m[34mSELECT COUNT(*) FROM "posts" WHERE "posts"."community_id" = 3 /*action='index',application='Backend',controller='communities'*/[0m
+  ↳ app/controllers/api/v1/communities_controller.rb:34:in 'Api::V1::CommunitiesController#community_json'
+  [1m[36mPost Count (3.2ms)[0m  [1m[34mSELECT COUNT(*) FROM "posts" WHERE "posts"."community_id" = 2 /*action='index',application='Backend',controller='communities'*/[0m
+  ↳ app/controllers/api/v1/communities_controller.rb:34:in 'Api::V1::CommunitiesController#community_json'
+  [1m[36mPost Count (5.4ms)[0m  [1m[34mSELECT COUNT(*) FROM "posts" WHERE "posts"."community_id" = 1 /*action='index',application='Backend',controller='communities'*/[0m
+  ↳ app/controllers/api/v1/communities_controller.rb:34:in 'Api::V1::CommunitiesController#community_json'
+Completed 200 OK in 401ms (Views: 0.1ms | ActiveRecord: 140.7ms (4 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/api/v1/posts/8/comments" for 127.0.0.1 at 2026-08-14 16:08:57 -0500
+Processing by Api::V1::CommentsController#index as */*
+  Parameters: {"post_id" => "8"}
+  [1m[36mPost Load (0.5ms)[0m  [1m[34mSELECT "posts".* FROM "posts" WHERE "posts"."id" = 8 LIMIT 1 /*action='index',application='Backend',controller='comments'*/[0m
+  ↳ app/controllers/api/v1/comments_controller.rb:32:in 'Api::V1::CommentsController#set_post'
+  [1m[36mComment Load (1.2ms)[0m  [1m[34mSELECT "comments".* FROM "comments" WHERE "comments"."post_id" = 8 ORDER BY "comments"."created_at" ASC /*action='index',application='Backend',controller='comments'*/[0m
+  ↳ app/controllers/api/v1/comments_controller.rb:13:in 'Enumerable#map'
+Completed 200 OK in 15ms (Views: 0.1ms | ActiveRecord: 4.7ms (2 queries, 0 cached) | GC: 0.0ms)
+
+
+Started POST "/api/v1/posts/8/comments" for 127.0.0.1 at 2026-08-14 16:09:02 -0500
+Processing by Api::V1::CommentsController#create as */*
+  Parameters: {"comment" => {"user_id" => 1, "content" => "mala publicacion"}, "post_id" => "8"}
+  [1m[36mPost Load (0.7ms)[0m  [1m[34mSELECT "posts".* FROM "posts" WHERE "posts"."id" = 8 LIMIT 1 /*action='create',application='Backend',controller='comments'*/[0m
+  ↳ app/controllers/api/v1/comments_controller.rb:32:in 'Api::V1::CommentsController#set_post'
+Filter chain halted as :authenticate_user! rendered or redirected
+Completed 401 Unauthorized in 3ms (Views: 0.1ms | ActiveRecord: 0.7ms (1 query, 0 cached) | GC: 0.0ms)
+
+
+Started POST "/api/v1/posts/8/reactions" for 127.0.0.1 at 2026-08-14 16:09:10 -0500
+Processing by Api::V1::ReactionsController#create as */*
+  Parameters: {"reaction" => {"user_id" => 1, "kind" => "like"}, "post_id" => "8"}
+  [1m[36mPost Load (1.2ms)[0m  [1m[34mSELECT "posts".* FROM "posts" WHERE "posts"."id" = 8 LIMIT 1 /*action='create',application='Backend',controller='reactions'*/[0m
+  ↳ app/controllers/api/v1/reactions_controller.rb:41:in 'Api::V1::ReactionsController#set_post'
+Filter chain halted as :authenticate_user! rendered or redirected
+Completed 401 Unauthorized in 26ms (Views: 1.8ms | ActiveRecord: 1.2ms (1 query, 0 cached) | GC: 0.0ms)
+
+
+Started POST "/api/v1/auth/login" for 127.0.0.1 at 2026-08-14 16:10:32 -0500
+Processing by Api::V1::Auth::SessionsController#create as */*
+  Parameters: {"email" => "[FILTERED]", "password" => "[FILTERED]", "session" => {"email" => "[FILTERED]", "password" => "[FILTERED]"}}
+  [1m[36mUser Load (422.7ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."email" = 'johan@newsflow.com' LIMIT 1 /*action='create',application='Backend',controller='sessions'*/[0m
+  ↳ app/controllers/api/v1/auth/sessions_controller.rb:7:in 'Api::V1::Auth::SessionsController#create'
+Completed 200 OK in 748ms (Views: 2.0ms | ActiveRecord: 422.6ms (1 query, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/api/v1/users/1/feed" for 127.0.0.1 at 2026-08-14 16:10:33 -0500
+Started GET "/api/v1/communities" for 127.0.0.1 at 2026-08-14 16:10:33 -0500
+Processing by Api::V1::FeedsController#show as */*
+  Parameters: {"user_id" => "1"}
+Processing by Api::V1::CommunitiesController#index as */*
+  [1m[36mUser Load (0.8ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = 1 LIMIT 1 /*action='show',application='Backend',controller='feeds'*/[0m
+  ↳ app/controllers/api/v1/feeds_controller.rb:5:in 'Api::V1::FeedsController#show'
+  [1m[36mCommunity Load (9.0ms)[0m  [1m[34mSELECT "communities".* FROM "communities" ORDER BY "communities"."created_at" DESC /*action='index',application='Backend',controller='communities'*/[0m
+  ↳ app/controllers/api/v1/communities_controller.rb:7:in 'Enumerable#map'
+  [1m[36mInterest Pluck (3.5ms)[0m  [1m[34mSELECT "interests"."name" FROM "interests" INNER JOIN "user_interests" ON "interests"."id" = "user_interests"."interest_id" WHERE "user_interests"."user_id" = 1 /*action='show',application='Backend',controller='feeds'*/[0m
+  ↳ app/controllers/api/v1/feeds_controller.rb:6:in 'Api::V1::FeedsController#show'
+  [1m[36mPost Count (6.9ms)[0m  [1m[34mSELECT COUNT(*) FROM "posts" WHERE "posts"."community_id" = 3 /*action='index',application='Backend',controller='communities'*/[0m
+  ↳ app/controllers/api/v1/communities_controller.rb:34:in 'Api::V1::CommunitiesController#community_json'
+  [1m[36mPost Load (2.9ms)[0m  [1m[34mSELECT "posts".* FROM "posts" WHERE "posts"."status" = 1 ORDER BY "posts"."created_at" DESC /*action='show',application='Backend',controller='feeds'*/[0m
+  ↳ app/controllers/api/v1/feeds_controller.rb:12:in 'Enumerable#sort_by'
+  [1m[36mPost Count (2.8ms)[0m  [1m[34mSELECT COUNT(*) FROM "posts" WHERE "posts"."community_id" = 2 /*action='index',application='Backend',controller='communities'*/[0m
+  ↳ app/controllers/api/v1/communities_controller.rb:34:in 'Api::V1::CommunitiesController#community_json'
+  [1m[36mPost Count (0.6ms)[0m  [1m[34mSELECT COUNT(*) FROM "posts" WHERE "posts"."community_id" = 1 /*action='index',application='Backend',controller='communities'*/[0m
+  ↳ app/controllers/api/v1/communities_controller.rb:34:in 'Api::V1::CommunitiesController#community_json'
+Completed 200 OK in 32ms (Views: 0.2ms | ActiveRecord: 19.2ms (4 queries, 0 cached) | GC: 0.0ms)
+
+
+  [1m[36mUser Load (7.3ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" IN (1, 2) /*action='show',application='Backend',controller='feeds'*/[0m
+  ↳ app/controllers/api/v1/feeds_controller.rb:12:in 'Enumerable#sort_by'
+  [1m[36mCommunity Load (1.2ms)[0m  [1m[34mSELECT "communities".* FROM "communities" WHERE "communities"."id" IN (3, 1, 2) /*action='show',application='Backend',controller='feeds'*/[0m
+  ↳ app/controllers/api/v1/feeds_controller.rb:12:in 'Enumerable#sort_by'
+Completed 200 OK in 47ms (Views: 0.2ms | ActiveRecord: 15.8ms (5 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/api/v1/posts/8/comments" for 127.0.0.1 at 2026-08-14 16:10:35 -0500
+Processing by Api::V1::CommentsController#index as */*
+  Parameters: {"post_id" => "8"}
+  [1m[36mPost Load (0.5ms)[0m  [1m[34mSELECT "posts".* FROM "posts" WHERE "posts"."id" = 8 LIMIT 1 /*action='index',application='Backend',controller='comments'*/[0m
+  ↳ app/controllers/api/v1/comments_controller.rb:32:in 'Api::V1::CommentsController#set_post'
+  [1m[36mComment Load (2.0ms)[0m  [1m[34mSELECT "comments".* FROM "comments" WHERE "comments"."post_id" = 8 ORDER BY "comments"."created_at" ASC /*action='index',application='Backend',controller='comments'*/[0m
+  ↳ app/controllers/api/v1/comments_controller.rb:13:in 'Enumerable#map'
+Completed 200 OK in 11ms (Views: 0.1ms | ActiveRecord: 2.4ms (2 queries, 0 cached) | GC: 0.0ms)
+
+
+Started POST "/api/v1/posts/8/comments" for 127.0.0.1 at 2026-08-14 16:10:39 -0500
+Processing by Api::V1::CommentsController#create as */*
+  Parameters: {"comment" => {"content" => "mal comentario"}, "post_id" => "8"}
+  [1m[36mPost Load (0.4ms)[0m  [1m[34mSELECT "posts".* FROM "posts" WHERE "posts"."id" = 8 LIMIT 1 /*action='create',application='Backend',controller='comments'*/[0m
+  ↳ app/controllers/api/v1/comments_controller.rb:32:in 'Api::V1::CommentsController#set_post'
+  [1m[36mUser Load (0.4ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = 1 LIMIT 1 /*action='create',application='Backend',controller='comments'*/[0m
+  ↳ app/controllers/application_controller.rb:8:in 'ApplicationController#current_user'
+  [1m[36mTRANSACTION (1.4ms)[0m  [1m[35mBEGIN /*action='create',application='Backend',controller='comments'*/[0m
+  ↳ app/controllers/api/v1/comments_controller.rb:20:in 'Api::V1::CommentsController#create'
+  [1m[36mComment Create (19.3ms)[0m  [1m[32mINSERT INTO "comments" ("user_id", "post_id", "content", "created_at", "updated_at") VALUES (1, 8, 'mal comentario', '2026-08-14 21:10:39.508426', '2026-08-14 21:10:39.508426') RETURNING "id" /*action='create',application='Backend',controller='comments'*/[0m
+  ↳ app/controllers/api/v1/comments_controller.rb:20:in 'Api::V1::CommentsController#create'
+  [1m[36mTRANSACTION (2.4ms)[0m  [1m[35mCOMMIT /*action='create',application='Backend',controller='comments'*/[0m
+  ↳ app/controllers/api/v1/comments_controller.rb:20:in 'Api::V1::CommentsController#create'
+Completed 201 Created in 61ms (Views: 0.2ms | ActiveRecord: 23.9ms (3 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/api/v1/posts/8/comments" for 127.0.0.1 at 2026-08-14 16:10:39 -0500
+Processing by Api::V1::CommentsController#index as */*
+  Parameters: {"post_id" => "8"}
+  [1m[36mPost Load (0.4ms)[0m  [1m[34mSELECT "posts".* FROM "posts" WHERE "posts"."id" = 8 LIMIT 1 /*action='index',application='Backend',controller='comments'*/[0m
+  ↳ app/controllers/api/v1/comments_controller.rb:32:in 'Api::V1::CommentsController#set_post'
+  [1m[36mComment Load (0.4ms)[0m  [1m[34mSELECT "comments".* FROM "comments" WHERE "comments"."post_id" = 8 ORDER BY "comments"."created_at" ASC /*action='index',application='Backend',controller='comments'*/[0m
+  ↳ app/controllers/api/v1/comments_controller.rb:13:in 'Enumerable#map'
+  [1m[36mUser Load (0.5ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = 1 /*action='index',application='Backend',controller='comments'*/[0m
+  ↳ app/controllers/api/v1/comments_controller.rb:13:in 'Enumerable#map'
+Completed 200 OK in 8ms (Views: 0.1ms | ActiveRecord: 1.3ms (3 queries, 0 cached) | GC: 0.0ms)
+
+
+Started POST "/api/v1/posts/8/reactions" for 127.0.0.1 at 2026-08-14 16:10:41 -0500
+Processing by Api::V1::ReactionsController#create as */*
+  Parameters: {"reaction" => {"kind" => "like"}, "post_id" => "8"}
+  [1m[36mPost Load (0.5ms)[0m  [1m[34mSELECT "posts".* FROM "posts" WHERE "posts"."id" = 8 LIMIT 1 /*action='create',application='Backend',controller='reactions'*/[0m
+  ↳ app/controllers/api/v1/reactions_controller.rb:41:in 'Api::V1::ReactionsController#set_post'
+  [1m[36mUser Load (0.4ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = 1 LIMIT 1 /*action='create',application='Backend',controller='reactions'*/[0m
+  ↳ app/controllers/application_controller.rb:8:in 'ApplicationController#current_user'
+  [1m[36mReaction Load (3.8ms)[0m  [1m[34mSELECT "reactions".* FROM "reactions" WHERE "reactions"."post_id" = 8 AND "reactions"."user_id" = 1 LIMIT 1 /*action='create',application='Backend',controller='reactions'*/[0m
+  ↳ app/controllers/api/v1/reactions_controller.rb:16:in 'Api::V1::ReactionsController#create'
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN /*action='create',application='Backend',controller='reactions'*/[0m
+  ↳ app/controllers/api/v1/reactions_controller.rb:22:in 'Api::V1::ReactionsController#create'
+  [1m[36mReaction Exists? (2.5ms)[0m  [1m[34mSELECT 1 AS one FROM "reactions" WHERE "reactions"."user_id" = 1 AND "reactions"."post_id" = 8 LIMIT 1 /*action='create',application='Backend',controller='reactions'*/[0m
+  ↳ app/controllers/api/v1/reactions_controller.rb:22:in 'Api::V1::ReactionsController#create'
+  [1m[36mReaction Create (2.6ms)[0m  [1m[32mINSERT INTO "reactions" ("user_id", "post_id", "kind", "created_at", "updated_at") VALUES (1, 8, 0, '2026-08-14 21:10:41.431594', '2026-08-14 21:10:41.431594') RETURNING "id" /*action='create',application='Backend',controller='reactions'*/[0m
+  ↳ app/controllers/api/v1/reactions_controller.rb:22:in 'Api::V1::ReactionsController#create'
+  [1m[36mTRANSACTION (0.5ms)[0m  [1m[35mCOMMIT /*action='create',application='Backend',controller='reactions'*/[0m
+  ↳ app/controllers/api/v1/reactions_controller.rb:22:in 'Api::V1::ReactionsController#create'
+Completed 201 Created in 53ms (Views: 0.2ms | ActiveRecord: 24.6ms (5 queries, 0 cached) | GC: 0.0ms)
+
+
+Started POST "/api/v1/posts/8/reactions" for 127.0.0.1 at 2026-08-14 16:10:43 -0500
+Processing by Api::V1::ReactionsController#create as */*
+  Parameters: {"reaction" => {"kind" => "like"}, "post_id" => "8"}
+  [1m[36mPost Load (0.5ms)[0m  [1m[34mSELECT "posts".* FROM "posts" WHERE "posts"."id" = 8 LIMIT 1 /*action='create',application='Backend',controller='reactions'*/[0m
+  ↳ app/controllers/api/v1/reactions_controller.rb:41:in 'Api::V1::ReactionsController#set_post'
+  [1m[36mUser Load (0.6ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = 1 LIMIT 1 /*action='create',application='Backend',controller='reactions'*/[0m
+  ↳ app/controllers/application_controller.rb:8:in 'ApplicationController#current_user'
+  [1m[36mReaction Load (0.5ms)[0m  [1m[34mSELECT "reactions".* FROM "reactions" WHERE "reactions"."post_id" = 8 AND "reactions"."user_id" = 1 LIMIT 1 /*action='create',application='Backend',controller='reactions'*/[0m
+  ↳ app/controllers/api/v1/reactions_controller.rb:16:in 'Api::V1::ReactionsController#create'
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN /*action='create',application='Backend',controller='reactions'*/[0m
+  ↳ app/controllers/api/v1/reactions_controller.rb:22:in 'Api::V1::ReactionsController#create'
+  [1m[36mReaction Exists? (0.6ms)[0m  [1m[34mSELECT 1 AS one FROM "reactions" WHERE "reactions"."user_id" = 1 AND "reactions"."id" != 4 AND "reactions"."post_id" = 8 LIMIT 1 /*action='create',application='Backend',controller='reactions'*/[0m
+  ↳ app/controllers/api/v1/reactions_controller.rb:22:in 'Api::V1::ReactionsController#create'
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mCOMMIT /*action='create',application='Backend',controller='reactions'*/[0m
+  ↳ app/controllers/api/v1/reactions_controller.rb:22:in 'Api::V1::ReactionsController#create'
+  [1m[36mCACHE User Load (0.0ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = 1 LIMIT 1[0m
+  ↳ app/controllers/api/v1/reactions_controller.rb:54:in 'Api::V1::ReactionsController#reaction_json'
+Completed 201 Created in 35ms (Views: 0.4ms | ActiveRecord: 18.4ms (5 queries, 1 cached) | GC: 0.0ms)
+
+
+Started POST "/api/v1/posts/8/reactions" for 127.0.0.1 at 2026-08-14 16:10:43 -0500
+Processing by Api::V1::ReactionsController#create as */*
+  Parameters: {"reaction" => {"kind" => "like"}, "post_id" => "8"}
+  [1m[36mPost Load (0.5ms)[0m  [1m[34mSELECT "posts".* FROM "posts" WHERE "posts"."id" = 8 LIMIT 1 /*action='create',application='Backend',controller='reactions'*/[0m
+  ↳ app/controllers/api/v1/reactions_controller.rb:41:in 'Api::V1::ReactionsController#set_post'
+  [1m[36mUser Load (0.4ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = 1 LIMIT 1 /*action='create',application='Backend',controller='reactions'*/[0m
+  ↳ app/controllers/application_controller.rb:8:in 'ApplicationController#current_user'
+  [1m[36mReaction Load (0.5ms)[0m  [1m[34mSELECT "reactions".* FROM "reactions" WHERE "reactions"."post_id" = 8 AND "reactions"."user_id" = 1 LIMIT 1 /*action='create',application='Backend',controller='reactions'*/[0m
+  ↳ app/controllers/api/v1/reactions_controller.rb:16:in 'Api::V1::ReactionsController#create'
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN /*action='create',application='Backend',controller='reactions'*/[0m
+  ↳ app/controllers/api/v1/reactions_controller.rb:22:in 'Api::V1::ReactionsController#create'
+  [1m[36mReaction Exists? (2.8ms)[0m  [1m[34mSELECT 1 AS one FROM "reactions" WHERE "reactions"."user_id" = 1 AND "reactions"."id" != 4 AND "reactions"."post_id" = 8 LIMIT 1 /*action='create',application='Backend',controller='reactions'*/[0m
+  ↳ app/controllers/api/v1/reactions_controller.rb:22:in 'Api::V1::ReactionsController#create'
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mCOMMIT /*action='create',application='Backend',controller='reactions'*/[0m
+  ↳ app/controllers/api/v1/reactions_controller.rb:22:in 'Api::V1::ReactionsController#create'
+  [1m[36mCACHE User Load (0.0ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = 1 LIMIT 1[0m
+  ↳ app/controllers/api/v1/reactions_controller.rb:54:in 'Api::V1::ReactionsController#reaction_json'
+Completed 201 Created in 17ms (Views: 0.2ms | ActiveRecord: 4.5ms (5 queries, 1 cached) | GC: 0.0ms)
+
+

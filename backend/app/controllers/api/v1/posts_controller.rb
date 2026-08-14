@@ -1,6 +1,8 @@
 module Api
   module V1
     class PostsController < ApplicationController
+      before_action :authenticate_user!, only: [:create]
+      
       def index
         posts = Post.includes(:user, :community)
                     .order(created_at: :desc)
@@ -23,7 +25,7 @@ module Api
       end
 
       def create
-        post = Post.new(post_params)
+        post = current_user.posts.new(post_params)
 
         if params[:community_id].present?
           post.community_id = params[:community_id]
@@ -37,12 +39,10 @@ module Api
           }, status: :unprocessable_entity
         end
       end
-
       private
 
       def post_params
         params.require(:post).permit(
-          :user_id,
           :community_id,
           :title,
           :content,

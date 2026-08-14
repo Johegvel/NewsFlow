@@ -2,6 +2,8 @@ module Api
   module V1
     class CommentsController < ApplicationController
       before_action :set_post
+      before_action :authenticate_user!, only: [:create]
+      
 
       def index
         comments = @post.comments
@@ -13,6 +15,7 @@ module Api
 
       def create
         comment = @post.comments.new(comment_params)
+        comment.user = current_user
 
         if comment.save
           render json: comment_json(comment), status: :created
@@ -30,7 +33,7 @@ module Api
       end
 
       def comment_params
-        params.require(:comment).permit(:user_id, :content)
+        params.require(:comment).permit(:content)
       end
 
       def comment_json(comment)
