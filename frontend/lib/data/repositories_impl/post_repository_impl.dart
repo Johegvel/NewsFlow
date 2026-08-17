@@ -1,0 +1,76 @@
+import '../../domain/entities/post_entity.dart';
+import '../../domain/entities/comment_entity.dart';
+import '../../domain/entities/saved_post_entity.dart';
+import '../../domain/repositories/post_repository.dart';
+import '../datasources/remote_api_datasource.dart';
+
+class PostRepositoryImpl implements PostRepository {
+  final RemoteApiDataSource remoteDataSource;
+
+  PostRepositoryImpl({required this.remoteDataSource});
+
+  @override
+  Future<List<PostEntity>> fetchPosts({int? communityId, String? filter}) async {
+    return await remoteDataSource.fetchPosts(communityId: communityId, filter: filter);
+  }
+
+  @override
+  Future<PostEntity> fetchPost(int postId) async {
+    return await remoteDataSource.fetchPost(postId);
+  }
+
+  @override
+  Future<PostEntity> createPost({
+    required int communityId,
+    required String title,
+    required String content,
+    required String postType,
+    required int userId,
+  }) async {
+    return await remoteDataSource.createPost(
+      communityId: communityId,
+      title: title,
+      content: content,
+      postType: postType,
+      userId: userId,
+    );
+  }
+
+  @override
+  Future<List<CommentEntity>> fetchComments(int postId) async {
+    return await remoteDataSource.fetchComments(postId);
+  }
+
+  @override
+  Future<CommentEntity> createComment({
+    required int postId,
+    required String content,
+    required int userId,
+  }) async {
+    return await remoteDataSource.createComment(
+      postId: postId,
+      content: content,
+      userId: userId,
+    );
+  }
+
+  @override
+  Future<void> createReaction({required int postId, required int userId}) async {
+    await remoteDataSource.createReaction(postId: postId, userId: userId);
+  }
+
+  @override
+  Future<void> savePost({required int postId, required int userId}) async {
+    await remoteDataSource.savePost(postId: postId, userId: userId);
+  }
+
+  @override
+  Future<List<SavedPostEntity>> fetchSavedPosts(int userId) async {
+    return await remoteDataSource.fetchSavedPosts(userId);
+  }
+
+  @override
+  Future<void> deleteSavedPost(int savedPostId) async {
+    await remoteDataSource.deleteSavedPost(savedPostId);
+  }
+}

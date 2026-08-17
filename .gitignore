@@ -1,0 +1,43 @@
+# ==========================================
+# Documentación local & bitácora
+# ==========================================
+docs/Updates.md
+
+# ==========================================
+# Archivos de entorno y credenciales sensibles
+# ==========================================
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+
+# ==========================================
+# Sistema Operativo
+# ==========================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# ==========================================
+# Editores e IDEs
+# ==========================================
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+*~
+
+# ==========================================
+# Logs y Temporales Generales
+# ==========================================
+*.log
+log/
+tmp/

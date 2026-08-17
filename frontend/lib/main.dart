@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
-
-import 'screens/home_page.dart';
+import 'core/theme/app_theme.dart';
+import 'presentation/screens/splash/splash_screen.dart';
+import 'service_locator.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  ServiceLocator.init();
+
   runApp(const NewsFlowApp());
 }
 
@@ -12,15 +16,10 @@ class NewsFlowApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'NewsFlow',
+      title: 'Flews',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.indigo,
-        ),
-        useMaterial3: true,
-      ),
-      home: const HomePage(),
+      theme: AppTheme.darkTheme,
+      home: const SplashScreen(),
     );
   }
 }

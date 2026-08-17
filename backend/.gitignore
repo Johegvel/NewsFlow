@@ -1,0 +1,59 @@
+# ==========================================
+# Bundler
+# ==========================================
+/.bundle
+/vendor/bundle
+
+# ==========================================
+# Logs y Archivos Temporales de Rails
+# ==========================================
+/log/*
+!/log/.keep
+
+/tmp/*
+!/tmp/.keep
+!/tmp/pids/.keep
+
+/tmp/pids/*
+!/tmp/pids/
+!/tmp/pids/.keep
+
+# ==========================================
+# Almacenamiento local (Active Storage / SQLite)
+# ==========================================
+/storage/*
+!/storage/.keep
+/tmp/storage/*
+!/tmp/storage/.keep
+
+/db/*.sqlite3
+/db/*.sqlite3-journal
+/db/*.sqlite3-*
+
+# ==========================================
+# Assets compilados
+# ==========================================
+/public/assets
+
+# ==========================================
+# Claves y Credenciales Sensibles de Rails
+# ==========================================
+/config/master.key
+/config/credentials/*.key
+
+# ==========================================
+# Variables de Entorno
+# ==========================================
+.env
+.env.*
+!.env.example
+
+# ==========================================
+# IDEs y Sistema Operativo
+# ==========================================
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+*~

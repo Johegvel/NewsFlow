@@ -1,0 +1,126 @@
+================================================================================
+INFORME TÉCNICO DE DESARROLLO DE BACKEND Y EXTRACCIÓN DE DATOS (SCRAPING/INGESTA)
+PROYECTO: FLEWS (FEW NEWS - PLATAFORMA DE NOTICIAS CURADAS Y TRIBUNA EDITORIAL)
+================================================================================
+
+1. DESARROLLO DE BACKEND (ARQUITECTURA, APIS Y LÓGICA DE NEGOCIO)
+--------------------------------------------------------------------------------
+
+1.1. Arquitectura y Tecnologías
+- Framework: Ruby on Rails 8 (Modo API pura).
+- Base de Datos: PostgreSQL 16 (Configurado para Supabase en la nube y entorno local).
+- Servidor Web: Puma multi-hilo con configuración de producción para Google Cloud Run.
+- Gestión de Tareas en Segundo Plano: Solid Queue integrado con Active Job.
+- Formato de Comunicación: JSON RESTful estándar bajo la convención /api/v1/*.
+
+1.2. Catálogo Completo de Endpoints y Lógica de Negocio
+El backend implementa de forma integral todos los requisitos funcionales organizados por módulos:
+
+A. Módulo de Autenticación y Gestión de Sesión:
+   • POST /api/v1/auth/login
+     - Lógica: Valida la existencia del usuario mediante correo electrónico y retorna su entidad persistente.
+     - Seguridad: Sanitización de email con trim/lowercase y manejo de errores 404/422.
+   • POST /api/v1/auth/register
+     - Lógica: Crea un nuevo usuario garantizando la unicidad del correo electrónico.
+     - Seguridad: Validación de unicidad a nivel de modelo y base de datos con índices únicos.
+   • GET /api/v1/auth/me
+     - Lógica: Valida el estado de la sesión activa para persistencia en móvil y web.
+   • GET /api/v1/auth/users
+     - Lógica: Lista usuarios disponibles para conmutación rápida en entornos de prueba y desarrollo.
+
+B. Módulo de Comunidades Temáticas (7 Ramas Activas):
+   • GET /api/v1/communities
+     - Lógica: Retorna el catálogo de ramas temáticas (Tecnología & IA, Ciberseguridad, Ciencia & Espacio, Salud & Medicina, Gastronomía & Alimentos, Deportes, Negocios & Startups).
+   • GET /api/v1/communities/:id
+     - Lógica: Obtiene el detalle, descripción y tópicos asociados a una comunidad.
+
+C. Módulo de Noticias Curadas y Tribuna de Críticas:
+   • GET /api/v1/posts?filter=news
+     - Lógica: Retorna el feed oficial de noticias curadas de alta relevancia, excluyendo publicaciones sin validar.
+   • GET /api/v1/posts?filter=critiques
+     - Lógica: Retorna la tribuna editorial comunitaria donde se listan los análisis en profundidad escritos por los usuarios citando noticias.
+   • GET /api/v1/communities/:community_id/posts
+     - Lógica: Retorna publicaciones segmentadas por una comunidad específica.
+   • GET /api/v1/posts/:id
+     - Lógica: Retorna el contenido completo del artículo, autor, fecha, conteo de comentarios y reacciones calculadas de forma optimizada.
+   • POST /api/v1/posts / POST /api/v1/communities/:community_id/posts
+     - Lógica: Permite la creación de críticas y análisis (post_type: :critique) citando formalmente una noticia existente.
+
+D. Módulo de Comentarios y Discusión:
+   • GET /api/v1/posts/:post_id/comments
+     - Lógica: Lista los comentarios ordenados cronológicamente asociados a una noticia o crítica.
+   • POST /api/v1/posts/:post_id/comments
+     - Lógica: Inserción transaccional de un nuevo comentario asociado al usuario autenticado.
+
+E. Módulo de Reacciones y Señal de Relevancia:
+   • POST /api/v1/posts/:post_id/reactions
+     - Lógica: Registra el voto de relevancia ("Me gusta / Relevante") del usuario.
+   • DELETE /api/v1/reactions/:id
+     - Lógica: Elimina la reacción previamente emitida garantizando la consistencia de los contadores.
+
+F. Módulo de Marcadores y Guardados:
+   • POST /api/v1/posts/:post_id/saved_posts
+     - Lógica: Almacena una noticia en la lista de lectura personal del usuario.
+   • GET /api/v1/users/:user_id/saved_posts
+     - Lógica: Recupera las noticias guardadas incluyendo la información completa del post.
+   • DELETE /api/v1/saved_posts/:id
+     - Lógica: Remueve el artículo de la lista de marcadores personales.
+
+G. Módulo de Moderación Comunitaria:
+   • POST /api/v1/posts/:post_id/reports
+     - Lógica: Permite a los usuarios reportar contenido inexacto, spam o inapropiado adjuntando un motivo.
+   • GET /api/v1/reports
+     - Lógica: Lista los reportes registrados para revisión editorial.
+   • PATCH /api/v1/reports/:id
+     - Lógica: Actualiza el estado de resolución del reporte (pending, reviewed, dismissed).
+
+1.3. Seguridad Básica e Integridad Transaccional
+- Strong Parameters: Todos los controladores implementan filtrado estricto de parámetros permitidos (.permit(...)) evitando vulnerabilidades de asignación masiva.
+- Integridad Referencial: Claves foráneas (foreign keys) activadas en PostgreSQL con reglas dependent: :destroy en cascada para evitar registros huérfanos.
+- Validaciones Active Record: Validación de presencia y formato en títulos, contenidos y correos electrónicos.
+- Respuestas HTTP Estándar: Manejo consistente de códigos de estado HTTP (200 OK, 201 Created, 204 No Content, 422 Unprocessable Entity).
+- CORS Configurado: Middleware Rack CORS habilitado para admitir peticiones seguras desde clientes web y móviles.
+
+
+================================================================================
+2. EXTRACCIÓN DE DATOS (SCRAPING, INGESTA INTELIGENTE Y OPTIMIZACIÓN)
+================================================================================
+
+2.1. Filosofía de Extracción de Alta Señal ($0 Costo Operativo)
+Para cumplir con el propósito de Flews ("Menos ruido, mayor calidad informativa"), el módulo de ingesta no extrae información de forma indiscriminada, sino que aplica un embudo de relevancia social y consenso que filtra el 95% del clickbait y noticias irrelevantes sin incurrir en costos de suscripciones o APIs de pago.
+
+2.2. Fuentes de Extracción Integradas y Gratuitas:
+A. Hacker News API (Algolia):
+   - Endpoint: https://hn.algolia.com/api/v1/search
+   - Cobertura: Tecnología, Inteligencia Artificial, Ciberseguridad y Startups.
+   - Criterio de Selección: Filtro estricto por umbral numérico (points >= 70 y num_comments >= 15).
+B. Reddit Public JSON Endpoints:
+   - Endpoints: https://www.reddit.com/r/{subreddit}/top.json?t=day
+   - Comunidades: r/technology, r/science, r/artificial, r/netsec, r/health, r/medicine, r/foodscience, r/AskCulinary, r/sports.
+   - Criterio de Selección: Puntuación de aprobación comunitaria (score >= 50 a 150 según la rama) descartando publicaciones marcadas como NSFW o contenido exclusivamente de video.
+C. Feeds RSS / Atom de Medios de Referencia:
+   - Cobertura: TechCrunch, Phys.org (Ciencia), Medical News Today (Salud), Eater (Gastronomía), BBC Sport (Deportes), The Hacker News (Ciberseguridad).
+   - Extracción de metadatos: Titular, resumen, fecha de publicación y enlace canónico original.
+
+2.3. Uso Eficiente de Librerías y Arquitectura Modular (Source Adapters)
+- Cliente HTTP Robusto: Implementado en app/services/news_ingestion/sources/base_source.rb utilizando la librería estándar Net::HTTP y URI de Ruby, evitando dependencias pesadas innecesarias.
+- Configuración de Conexiones:
+  • open_timeout: 5 segundos (evita bloqueos si el servidor remoto no responde).
+  • read_timeout: 10 segundos (protección contra lecturas colgadas).
+  • Soporte SSL automático y cabecera User-Agent identificable ('FlewsBot/1.0').
+- Parseo Eficiente de XML/RSS: Utilización de la gema estándar RSS::Parser para procesar feeds Atom/RSS en memoria de manera no bloqueante.
+
+2.4. Curaduría Heurística y Buenas Prácticas de Extracción:
+- Limpieza y Sanitización de Contenido: Eliminación de etiquetas HTML residuales, normalización de espacios en blanco y truncado inteligente a longitudes óptimas para lectura.
+- Filtro Anti-Clickbait: Expresiones regulares en app/services/news_ingestion/curators/heuristic_curator.rb que descartan titulares sensacionalistas.
+- Deduplicación Transaccional: Verificación previa en base de datos mediante coincidencia de titulares y enlaces canónicos para evitar la inserción de noticias duplicadas.
+- Enriquecimiento Editorial: Cada noticia procesada incorpora una insignia de procedencia y puntos de relevancia de comunidad (ej. "📊 Relevancia: 340 puntos de comunidad (Hacker News)").
+- Atribución y Transparencia: Persistencia asociada al usuario de sistema "Flews Curador" (bot@flews.app) con enlaces directos a las fuentes originales.
+
+2.5. Automatización y Tareas Programadas:
+- Tarea Rake Ejecutable: lib/tasks/news_ingestion.rake (ejecutable bajo demanda mediante bin/rails news:fetch_trending).
+- Background Worker: app/jobs/fetch_trending_news_job.rb listo para ejecución desatendida y periódica en segundo plano mediante Solid Queue / Cron.
+
+================================================================================
+FIN DEL INFORME TÉCNICO - FLEWS BACKEND & INGESTION ENGINE
+================================================================================

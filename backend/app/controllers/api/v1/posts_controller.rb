@@ -5,6 +5,14 @@ module Api
         posts = Post.includes(:user, :community)
                     .order(created_at: :desc)
 
+        if params[:filter] == 'news'
+          posts = posts.where.not(post_type: :critique)
+        elsif params[:filter] == 'critiques' || params[:post_type] == 'critique'
+          posts = posts.where(post_type: :critique)
+        elsif params[:post_type].present?
+          posts = posts.where(post_type: params[:post_type])
+        end
+
         if params[:community_id].present?
           posts = posts.where(community_id: params[:community_id])
         end
