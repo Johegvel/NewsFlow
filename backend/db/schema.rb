@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_13_022015) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_14_222018) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -34,6 +34,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_022015) do
     t.index ["slug"], name: "index_communities_on_slug", unique: true
   end
 
+  create_table "interests", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "name"
+    t.string "slug"
+    t.datetime "updated_at", null: false
+    t.index ["slug"], name: "index_interests_on_slug", unique: true
+  end
+
   create_table "posts", force: :cascade do |t|
     t.bigint "community_id", null: false
     t.text "content"
@@ -55,6 +63,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_022015) do
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
     t.index ["post_id"], name: "index_reactions_on_post_id"
+    t.index ["user_id", "post_id"], name: "index_reactions_on_user_and_post", unique: true
     t.index ["user_id"], name: "index_reactions_on_user_id"
   end
 
@@ -76,13 +85,25 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_022015) do
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
     t.index ["post_id"], name: "index_saved_posts_on_post_id"
+    t.index ["user_id", "post_id"], name: "index_saved_posts_on_user_and_post", unique: true
     t.index ["user_id"], name: "index_saved_posts_on_user_id"
+  end
+
+  create_table "user_interests", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "interest_id", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["interest_id"], name: "index_user_interests_on_interest_id"
+    t.index ["user_id", "interest_id"], name: "index_user_interests_on_user_id_and_interest_id", unique: true
+    t.index ["user_id"], name: "index_user_interests_on_user_id"
   end
 
   create_table "users", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "email"
     t.string "name"
+    t.string "password_digest"
     t.datetime "updated_at", null: false
     t.index ["email"], name: "index_users_on_email", unique: true
   end
@@ -97,4 +118,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_022015) do
   add_foreign_key "reports", "users"
   add_foreign_key "saved_posts", "posts"
   add_foreign_key "saved_posts", "users"
+  add_foreign_key "user_interests", "interests"
+  add_foreign_key "user_interests", "users"
 end

@@ -1,32 +1,22 @@
 module Api
   module V1
     class SavedPostsController < ApplicationController
+      before_action :authenticate_user!
+
       def index
-        user = User.find(params[:user_id])
-
-        saved_posts = user.saved_posts
-                         .includes(post: [:user, :community])
-                         .order(created_at: :desc)
-
-        render json: saved_posts.map { |saved_post| saved_post_json(saved_post) }
+        saved_posts = current_user.saved_posts.includes(:post)
+        render json: saved_posts
       end
 
       def create
         post = Post.find(params[:post_id])
-        user = User.find(saved_post_params[:user_id])
-
-        saved_post = SavedPost.find_or_initialize_by(
-          user: user,
-          post: post
-        )
+        saved_post = current_user.saved_posts.find_or_initialize_by(post: post)
 
         if saved_post.save
-          render json: saved_post_json(saved_post),
-                 status: saved_post.previously_new_record? ? :created : :ok
+          render json: saved_post, status: :created
         else
-          render json: {
-            errors: saved_post.errors.full_messages
-          }, status: :unprocessable_entity
+          render json: { errors: saved_post.errors.full_messages },
+                status: :unprocessable_entity
         end
       end
 
@@ -40,7 +30,7 @@ module Api
       private
 
       def saved_post_params
-        params.require(:saved_post).permit(:user_id)
+        params.require(:saved_post).permit(:post_id)
       end
 
       def saved_post_json(saved_post)

@@ -1,19 +1,11 @@
 # ==========================================
-# Documentación local & bitácora
+# Documentación local & bitácoras individuales
 # ==========================================
-docs/Updates.md
+docs/Updates*.md
+docs/*.html
 
 # ==========================================
-# Archivos de entorno y credenciales sensibles
-# ==========================================
-.env
-.env.*
-!.env.example
-*.key
-*.pem
-
-# ==========================================
-# Sistema Operativo
+# Sistema operativo
 # ==========================================
 .DS_Store
 .DS_Store?
@@ -23,21 +15,84 @@ docs/Updates.md
 ehthumbs.db
 Thumbs.db
 desktop.ini
+*.swp
+*.swo
+*~
 
 # ==========================================
 # Editores e IDEs
 # ==========================================
 .vscode/
 .idea/
+*.iml
 *.sublime-project
 *.sublime-workspace
-*.swp
-*.swo
-*~
+.vscode/*.code-workspace
 
 # ==========================================
-# Logs y Temporales Generales
+# Variables de entorno y secretos
 # ==========================================
-*.log
-log/
-tmp/
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+backend/config/master.key
+backend/config/credentials/*.key
+
+# ==========================================
+# Flutter / Dart
+# ==========================================
+frontend/.dart_tool/
+frontend/.flutter-plugins
+frontend/.flutter-plugins-dependencies
+frontend/.packages
+frontend/.pub-cache/
+frontend/build/
+frontend/coverage/
+
+# ==========================================
+# Android
+# ==========================================
+frontend/android/.gradle/
+frontend/android/.cxx/
+frontend/android/local.properties
+frontend/android/captures/
+frontend/android/app/debug/
+frontend/android/app/profile/
+
+# ==========================================
+# iOS / macOS
+# ==========================================
+frontend/ios/Pods/
+frontend/ios/.symlinks/
+frontend/ios/Flutter/ephemeral/
+frontend/ios/Flutter/Generated.xcconfig
+frontend/ios/Flutter/flutter_export_environment.sh
+
+frontend/macos/Pods/
+frontend/macos/.symlinks/
+frontend/macos/Flutter/ephemeral/
+frontend/macos/Flutter/Generated.xcconfig
+frontend/macos/Flutter/flutter_export_environment.sh
+
+# ==========================================
+# Ruby on Rails
+# ==========================================
+backend/.bundle/
+backend/log/*
+!backend/log/.keep
+backend/tmp/*
+!backend/tmp/.keep
+backend/tmp/cache/*
+backend/tmp/pids/*
+backend/tmp/sockets/*
+backend/storage/*
+!backend/storage/.keep
+backend/public/assets/
+
+# ==========================================
+# Bases de datos locales
+# ==========================================
+backend/db/*.sqlite3
+backend/db/*.sqlite3-*

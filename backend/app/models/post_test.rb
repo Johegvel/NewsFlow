@@ -4,7 +4,9 @@ class PostTest < ActiveSupport::TestCase
   test "publicación válida" do
     user = User.create!(
       name: "Johan",
-      email: "johan@example.com"
+      email: "johan@example.com",
+      password: "NewsFlow123!",
+      password_confirmation: "NewsFlow123!"
     )
 
     community = Community.create!(

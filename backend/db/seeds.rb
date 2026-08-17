@@ -11,6 +11,10 @@ xavier = User.find_or_create_by!(email: "xavier@newsflow.com") do |user|
   user.name = "Xavier Camacho"
 end
 
+manuel = User.find_or_create_by!(email: "manuel@newsflow.com") do |user|
+  user.name = "Manuel Matute"
+end
+
 bot = User.find_or_create_by!(email: "bot@flews.app") do |user|
   user.name = "Flews Curador"
 end
@@ -112,4 +116,23 @@ Post.find_or_create_by!(
   post.published_at = Time.current
 end
 
-puts "Datos iniciales de Flews cargados correctamente con Salud y Gastronomía."
+# Semillas de Intereses
+if defined?(Interest)
+  interests = [
+    ["Tecnología & IA", "tecnologia"],
+    ["Deportes", "deportes"],
+    ["Ciencia & Espacio", "ciencia"],
+    ["Salud & Medicina", "salud"],
+    ["Gastronomía", "gastronomia"],
+    ["Ciberseguridad", "ciberseguridad"],
+    ["Negocios & Startups", "negocios"]
+  ]
+
+  interests.each do |name, slug|
+    Interest.find_or_create_by!(slug: slug) do |interest|
+      interest.name = name
+    end
+  end
+end
+
+puts "Datos iniciales cargados correctamente con 7 comunidades e intereses."

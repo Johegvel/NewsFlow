@@ -2,6 +2,7 @@ module Api
   module V1
     class ReactionsController < ApplicationController
       before_action :set_post, only: [:index, :create]
+      before_action :authenticate_user!, only: [:create]
 
       def index
         reactions = @post.reactions
@@ -13,7 +14,7 @@ module Api
 
       def create
         reaction = @post.reactions.find_or_initialize_by(
-          user_id: reaction_params[:user_id]
+          user: current_user
         )
 
         reaction.kind = reaction_params[:kind] || :like
@@ -41,7 +42,7 @@ module Api
       end
 
       def reaction_params
-        params.require(:reaction).permit(:user_id, :kind)
+        params.require(:reaction).permit(:kind)
       end
 
       def reaction_json(reaction)
