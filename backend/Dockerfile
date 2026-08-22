@@ -45,7 +45,9 @@ RUN sed -i 's/\r$//' /rails/bin/* && \
 # Run and own only the runtime files as a non-root user for security
 RUN groupadd --system --gid 1000 rails && \
     useradd rails --uid 1000 --gid 1000 --create-home --shell /bin/bash && \
-    chown -R rails:rails /rails db log storage tmp
+    rm -rf /rails/tmp/cache/* && \
+    mkdir -p /rails/tmp/pids /rails/tmp/sockets /rails/tmp/cache && \
+    chown -R rails:rails /rails
 USER 1000:1000
 
 # Cloud Run injects PORT (defaults to 8080 or 3000)
