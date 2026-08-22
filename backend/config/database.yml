@@ -36,3 +36,5 @@ test:
 production:
   <<: *default
   url: <%= ENV["DATABASE_URL"] %>
+  prepared_statements: false
+  sslmode: require
