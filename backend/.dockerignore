@@ -4,6 +4,4 @@
 log/*
 tmp/*
 storage/*
-Dockerfile
-.dockerignore
 README.md
