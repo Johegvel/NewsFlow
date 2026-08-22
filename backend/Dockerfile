@@ -38,10 +38,14 @@ RUN apt-get update -qq && \
 COPY --from=build "${BUNDLE_PATH}" "${BUNDLE_PATH}"
 COPY --from=build /rails /rails
 
+# Fix potential Windows CRLF endings and ensure executable permissions on bin scripts
+RUN sed -i 's/\r$//' /rails/bin/* && \
+    chmod +x /rails/bin/*
+
 # Run and own only the runtime files as a non-root user for security
 RUN groupadd --system --gid 1000 rails && \
     useradd rails --uid 1000 --gid 1000 --create-home --shell /bin/bash && \
-    chown -R rails:rails db log storage tmp
+    chown -R rails:rails /rails db log storage tmp
 USER 1000:1000
 
 # Cloud Run injects PORT (defaults to 8080 or 3000)
