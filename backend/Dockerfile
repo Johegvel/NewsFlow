@@ -56,4 +56,4 @@ EXPOSE 8080
 
 # Entrypoint prepares the database and boots Puma
 ENTRYPOINT ["/rails/bin/docker-entrypoint"]
-CMD ["./bin/rails", "server", "-b", "0.0.0.0"]
+CMD ["bundle", "exec", "puma", "-C", "config/puma.rb"]
