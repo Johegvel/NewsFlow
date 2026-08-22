@@ -24,11 +24,8 @@ Rails.application.configure do
   # Assume all access to the app is happening through a SSL-terminating reverse proxy (Cloud Run).
   config.assume_ssl = true
 
-  # Force all access to the app over SSL, use Strict-Transport-Security, and use secure cookies.
-  config.force_ssl = true
-
-  # Skip http-to-https redirect for the default health check endpoint.
-  config.ssl_options = { redirect: { exclude: ->(request) { request.path == "/up" || request.path == "/api/v1/health" } } }
+  # Do not force SSL redirect internally; Cloud Run edge handles HTTPS termination.
+  config.force_ssl = false
 
   # Log to STDOUT with the current request id as a default log tag.
   config.log_tags = [ :request_id ]

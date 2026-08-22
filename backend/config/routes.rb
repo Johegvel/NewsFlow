@@ -1,4 +1,8 @@
 Rails.application.routes.draw do
+  # Health check estándar de Rails y Google Cloud Run
+  get "up" => "rails/health#show", as: :rails_health_check
+  root to: "rails/health#show"
+
   namespace :api do
     namespace :v1 do
       get 'health', to: 'health#show'
