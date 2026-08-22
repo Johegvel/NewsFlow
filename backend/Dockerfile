@@ -46,7 +46,8 @@ RUN groupadd --system --gid 1000 rails && \
     useradd rails --uid 1000 --gid 1000 --create-home --shell /bin/bash && \
     rm -rf /rails/tmp/cache/* && \
     mkdir -p /rails/tmp/pids /rails/tmp/sockets /rails/tmp/cache && \
-    chown -R rails:rails /rails
+    chmod -R a+rX "${BUNDLE_PATH}" && \
+    chown -R rails:rails /rails "${BUNDLE_PATH}"
 USER 1000:1000
 
 # Cloud Run injects PORT (defaults to 8080 or 3000)
