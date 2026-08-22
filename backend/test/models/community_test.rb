@@ -1,7 +1,13 @@
 require "test_helper"
 
 class CommunityTest < ActiveSupport::TestCase
-  # test "the truth" do
-  #   assert true
-  # end
+  test "comunidad válida" do
+    community = Community.new(
+      name: "Tecnología",
+      slug: "tecnologia",
+      topic: "Tecnología"
+    )
+
+    assert community.valid?
+  end
 end
