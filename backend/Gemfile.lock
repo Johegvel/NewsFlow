@@ -369,9 +369,6 @@ DEPENDENCIES
   rexml (~> 3.4)
   rss (~> 0.3.1)
   rubocop-rails-omakase
-  solid_cable
-  solid_cache
-  solid_queue
   thruster
   tzinfo-data
 
