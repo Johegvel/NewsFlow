@@ -21,6 +21,7 @@ default: &default
   host: <%= ENV.fetch("POSTGRES_HOST") { "localhost" } %>
   port: <%= ENV.fetch("POSTGRES_PORT") { 5432 } %>
   sslmode: <%= ENV.fetch("DATABASE_SSL_MODE") { ENV["DATABASE_URL"] ? "require" : "prefer" } %>
+  connect_timeout: <%= ENV.fetch("DATABASE_CONNECT_TIMEOUT") { 10 } %>
   max_connections: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
 
 development:
@@ -70,20 +71,6 @@ test:
 # for a full overview on how database connection configuration can be specified.
 #
 production:
-  primary: &primary_production
-    <<: *default
-    database: backend_production
-    username: backend
-    password: <%= ENV["BACKEND_DATABASE_PASSWORD"] %>
-  cache:
-    <<: *primary_production
-    database: backend_production_cache
-    migrations_paths: db/cache_migrate
-  queue:
-    <<: *primary_production
-    database: backend_production_queue
-    migrations_paths: db/queue_migrate
-  cable:
-    <<: *primary_production
-    database: backend_production_cable
-    migrations_paths: db/cable_migrate
+  <<: *default
+  url: <%= ENV["DATABASE_URL"] %>
+  database: <%= ENV["POSTGRES_DB"] || "postgres" %>

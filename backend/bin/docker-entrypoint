@@ -1,8 +1,10 @@
-#!/bin/bash -e
+#!/bin/bash
+set -e
 
-# If running the rails server then create or migrate existing database
-if [ "${@: -2:1}" == "./bin/rails" ] && [ "${@: -1:1}" == "server" ]; then
-  ./bin/rails db:prepare
+# Preparar la base de datos si estamos arrancando el servidor Rails
+if [[ "$*" == *"rails"* && "$*" == *"server"* ]]; then
+  echo "==> Verificando y preparando base de datos..."
+  ./bin/rails db:prepare || echo "==> Aviso: db:prepare falló o tardó demasiado, continuando con el arranque del servidor..."
 fi
 
 exec "${@}"
