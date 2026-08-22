@@ -5,18 +5,26 @@ puts "Cargando datos iniciales de Flews..."
 
 johan = User.find_or_create_by!(email: "johan@newsflow.com") do |user|
   user.name = "Johan Veloz"
+  user.password = "NewsFlow123!"
+  user.password_confirmation = "NewsFlow123!"
 end
 
 xavier = User.find_or_create_by!(email: "xavier@newsflow.com") do |user|
   user.name = "Xavier Camacho"
+  user.password = "NewsFlow123!"
+  user.password_confirmation = "NewsFlow123!"
 end
 
 manuel = User.find_or_create_by!(email: "manuel@newsflow.com") do |user|
   user.name = "Manuel Matute"
+  user.password = "NewsFlow123!"
+  user.password_confirmation = "NewsFlow123!"
 end
 
 bot = User.find_or_create_by!(email: "bot@flews.app") do |user|
   user.name = "Flews Curador"
+  user.password = "FlewsBot2026!"
+  user.password_confirmation = "FlewsBot2026!"
 end
 
 tecnologia = Community.find_or_create_by!(slug: "tecnologia") do |community|

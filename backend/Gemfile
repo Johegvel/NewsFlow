@@ -54,3 +54,6 @@ gem "rack-cors", "~> 3.0"
 gem "bcrypt", "~> 3.1"
 
 gem "jwt", "~> 3.2"
+
+gem "rss", "~> 0.3.1"
+gem "rexml", "~> 3.4"
