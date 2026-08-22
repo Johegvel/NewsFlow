@@ -4,18 +4,19 @@ module Api
       # POST /api/v1/auth/login
       def login
         email = params[:email].to_s.strip.downcase
+        password = params[:password].to_s
 
-        if email.blank?
-          render json: { error: 'El correo electrónico es requerido' }, status: :bad_request
+        if email.blank? || password.blank?
+          render json: { error: 'Correo electrónico y contraseña son requeridos' }, status: :bad_request
           return
         end
 
         user = User.find_by('LOWER(email) = ?', email)
 
-        if user
+        if user&.authenticate(password)
           render json: user_json(user), status: :ok
         else
-          render json: { error: 'No se encontró ningún usuario con ese correo electrónico' }, status: :not_found
+          render json: { error: 'Credenciales inválidas. Verifica tu correo o contraseña.' }, status: :unauthorized
         end
       end
 
@@ -23,9 +24,15 @@ module Api
       def register
         name = params[:name].to_s.strip
         email = params[:email].to_s.strip.downcase
+        password = params[:password].to_s
 
-        if name.blank? || email.blank?
-          render json: { error: 'Nombre y correo electrónico son requeridos' }, status: :bad_request
+        if name.blank? || email.blank? || password.blank?
+          render json: { error: 'Nombre, correo electrónico y contraseña son requeridos' }, status: :bad_request
+          return
+        end
+
+        if password.length < 6
+          render json: { error: 'La contraseña debe tener al menos 6 caracteres' }, status: :unprocessable_entity
           return
         end
 
@@ -35,7 +42,7 @@ module Api
           return
         end
 
-        user = User.new(name: name, email: email)
+        user = User.new(name: name, email: email, password: password, password_confirmation: password)
 
         if user.save
           render json: user_json(user), status: :created

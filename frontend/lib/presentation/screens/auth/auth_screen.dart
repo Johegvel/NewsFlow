@@ -19,36 +19,30 @@ class _AuthScreenState extends State<AuthScreen>
   late TabController _tabController;
 
   final TextEditingController _loginEmailController = TextEditingController();
+  final TextEditingController _loginPasswordController = TextEditingController();
+
   final TextEditingController _registerNameController = TextEditingController();
   final TextEditingController _registerEmailController = TextEditingController();
+  final TextEditingController _registerPasswordController = TextEditingController();
 
+  bool _obscureLoginPassword = true;
+  bool _obscureRegisterPassword = true;
   bool _loading = false;
-  List<UserEntity> _demoUsers = [];
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _loadDemoUsers();
-  }
-
-  Future<void> _loadDemoUsers() async {
-    try {
-      final users = await ServiceLocator.authRepository.fetchAvailableUsers();
-      if (mounted) {
-        setState(() {
-          _demoUsers = users;
-        });
-      }
-    } catch (_) {}
   }
 
   @override
   void dispose() {
     _tabController.dispose();
     _loginEmailController.dispose();
+    _loginPasswordController.dispose();
     _registerNameController.dispose();
     _registerEmailController.dispose();
+    _registerPasswordController.dispose();
     super.dispose();
   }
 
@@ -73,13 +67,15 @@ class _AuthScreenState extends State<AuthScreen>
     );
   }
 
-  Future<void> _handleLogin([String? presetEmail]) async {
-    final email = presetEmail ?? _loginEmailController.text.trim();
-    if (email.isEmpty) {
+  Future<void> _handleLogin() async {
+    final email = _loginEmailController.text.trim();
+    final password = _loginPasswordController.text;
+
+    if (email.isEmpty || password.isEmpty) {
       FlewsNotificationHelper.show(
         context: context,
-        title: 'Campo requerido',
-        message: 'Por favor ingresa tu correo electrónico.',
+        title: 'Campos requeridos',
+        message: 'Por favor ingresa tu correo y contraseña.',
         actionIcon: Icons.warning_amber_rounded,
       );
       return;
@@ -88,7 +84,7 @@ class _AuthScreenState extends State<AuthScreen>
     setState(() => _loading = true);
 
     try {
-      final user = await ServiceLocator.authRepository.login(email);
+      final user = await ServiceLocator.authRepository.login(email, password);
       _onAuthSuccess(user, 'Sesión iniciada como ${user.name}');
     } catch (e) {
       if (mounted) {
@@ -106,12 +102,23 @@ class _AuthScreenState extends State<AuthScreen>
   Future<void> _handleRegister() async {
     final name = _registerNameController.text.trim();
     final email = _registerEmailController.text.trim();
+    final password = _registerPasswordController.text;
 
-    if (name.isEmpty || email.isEmpty) {
+    if (name.isEmpty || email.isEmpty || password.isEmpty) {
       FlewsNotificationHelper.show(
         context: context,
         title: 'Campos requeridos',
-        message: 'Completa tu nombre y correo electrónico.',
+        message: 'Por favor completa todos los campos (nombre, correo y contraseña).',
+        actionIcon: Icons.warning_amber_rounded,
+      );
+      return;
+    }
+
+    if (password.length < 6) {
+      FlewsNotificationHelper.show(
+        context: context,
+        title: 'Contraseña muy corta',
+        message: 'La contraseña debe tener al menos 6 caracteres.',
         actionIcon: Icons.warning_amber_rounded,
       );
       return;
@@ -120,7 +127,7 @@ class _AuthScreenState extends State<AuthScreen>
     setState(() => _loading = true);
 
     try {
-      final user = await ServiceLocator.authRepository.register(name, email);
+      final user = await ServiceLocator.authRepository.register(name, email, password);
       _onAuthSuccess(user, 'Tu cuenta ${user.name} ha sido creada con éxito.');
     } catch (e) {
       if (mounted) {
@@ -149,39 +156,26 @@ class _AuthScreenState extends State<AuthScreen>
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Logo Emblem
+                  // Logo Emblem sin brillos ni bordes contrastados
                   Center(
-                    child: Container(
-                      width: 100,
-                      height: 100,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppTheme.amberAccent.withValues(alpha: 0.2),
-                            blurRadius: 28,
-                            spreadRadius: 4,
-                          ),
-                        ],
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(20),
-                        child: Image.asset(
-                          'assets/images/flews_logo.png',
-                          width: 100,
-                          height: 100,
-                          fit: BoxFit.contain,
-                          errorBuilder: (context, error, stackTrace) =>
-                              const Icon(
-                            Icons.newspaper_rounded,
-                            size: 60,
-                            color: AppTheme.amberAccent,
-                          ),
+                    child: SizedBox(
+                      width: 90,
+                      height: 90,
+                      child: Image.asset(
+                        'assets/images/flews_logo.png',
+                        width: 90,
+                        height: 90,
+                        fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) =>
+                            const Icon(
+                          Icons.newspaper_rounded,
+                          size: 60,
+                          color: AppTheme.amberAccent,
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 18),
+                  const SizedBox(height: 16),
                   // Wordmark
                   Center(
                     child: RichText(
@@ -269,7 +263,7 @@ class _AuthScreenState extends State<AuthScreen>
                         Padding(
                           padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
                           child: SizedBox(
-                            height: 240,
+                            height: 310,
                             child: TabBarView(
                               controller: _tabController,
                               children: [
@@ -294,9 +288,39 @@ class _AuthScreenState extends State<AuthScreen>
                                         filled: true,
                                         fillColor: AppTheme.darkBackground,
                                       ),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    TextField(
+                                      controller: _loginPasswordController,
+                                      obscureText: _obscureLoginPassword,
+                                      style:
+                                          const TextStyle(color: Colors.white),
+                                      decoration: InputDecoration(
+                                        labelText: 'Contraseña',
+                                        prefixIcon: const Icon(
+                                          Icons.lock_outline_rounded,
+                                          color: AppTheme.amberAccent,
+                                        ),
+                                        suffixIcon: IconButton(
+                                          icon: Icon(
+                                            _obscureLoginPassword
+                                                ? Icons.visibility_outlined
+                                                : Icons.visibility_off_outlined,
+                                            color: AppTheme.textSecondary,
+                                          ),
+                                          onPressed: () {
+                                            setState(() {
+                                              _obscureLoginPassword =
+                                                  !_obscureLoginPassword;
+                                            });
+                                          },
+                                        ),
+                                        filled: true,
+                                        fillColor: AppTheme.darkBackground,
+                                      ),
                                       onSubmitted: (_) => _handleLogin(),
                                     ),
-                                    const SizedBox(height: 20),
+                                    const SizedBox(height: 18),
                                     FilledButton(
                                       onPressed:
                                           _loading ? null : () => _handleLogin(),
@@ -327,6 +351,39 @@ class _AuthScreenState extends State<AuthScreen>
                                               ),
                                             ),
                                     ),
+                                    const SizedBox(height: 12),
+                                    // Redirección a Registro
+                                    Center(
+                                      child: TextButton(
+                                        onPressed: () {
+                                          _tabController.animateTo(1);
+                                        },
+                                        style: TextButton.styleFrom(
+                                          foregroundColor: AppTheme.textSecondary,
+                                          padding: const EdgeInsets.symmetric(
+                                              vertical: 4, horizontal: 8),
+                                        ),
+                                        child: RichText(
+                                          text: const TextSpan(
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              color: AppTheme.textSecondary,
+                                            ),
+                                            children: [
+                                              TextSpan(
+                                                  text: '¿No tienes cuenta? '),
+                                              TextSpan(
+                                                text: 'Regístrate aquí',
+                                                style: TextStyle(
+                                                  color: AppTheme.amberAccent,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
                                   ],
                                 ),
 
@@ -350,7 +407,7 @@ class _AuthScreenState extends State<AuthScreen>
                                         fillColor: AppTheme.darkBackground,
                                       ),
                                     ),
-                                    const SizedBox(height: 12),
+                                    const SizedBox(height: 10),
                                     TextField(
                                       controller: _registerEmailController,
                                       keyboardType: TextInputType.emailAddress,
@@ -365,9 +422,39 @@ class _AuthScreenState extends State<AuthScreen>
                                         filled: true,
                                         fillColor: AppTheme.darkBackground,
                                       ),
+                                    ),
+                                    const SizedBox(height: 10),
+                                    TextField(
+                                      controller: _registerPasswordController,
+                                      obscureText: _obscureRegisterPassword,
+                                      style:
+                                          const TextStyle(color: Colors.white),
+                                      decoration: InputDecoration(
+                                        labelText: 'Contraseña (mínimo 6 caracteres)',
+                                        prefixIcon: const Icon(
+                                          Icons.lock_outline_rounded,
+                                          color: AppTheme.amberAccent,
+                                        ),
+                                        suffixIcon: IconButton(
+                                          icon: Icon(
+                                            _obscureRegisterPassword
+                                                ? Icons.visibility_outlined
+                                                : Icons.visibility_off_outlined,
+                                            color: AppTheme.textSecondary,
+                                          ),
+                                          onPressed: () {
+                                            setState(() {
+                                              _obscureRegisterPassword =
+                                                  !_obscureRegisterPassword;
+                                            });
+                                          },
+                                        ),
+                                        filled: true,
+                                        fillColor: AppTheme.darkBackground,
+                                      ),
                                       onSubmitted: (_) => _handleRegister(),
                                     ),
-                                    const SizedBox(height: 16),
+                                    const SizedBox(height: 14),
                                     FilledButton(
                                       onPressed:
                                           _loading ? null : _handleRegister,
@@ -398,6 +485,39 @@ class _AuthScreenState extends State<AuthScreen>
                                               ),
                                             ),
                                     ),
+                                    const SizedBox(height: 8),
+                                    // Redirección a Login
+                                    Center(
+                                      child: TextButton(
+                                        onPressed: () {
+                                          _tabController.animateTo(0);
+                                        },
+                                        style: TextButton.styleFrom(
+                                          foregroundColor: AppTheme.textSecondary,
+                                          padding: const EdgeInsets.symmetric(
+                                              vertical: 4, horizontal: 8),
+                                        ),
+                                        child: RichText(
+                                          text: const TextSpan(
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              color: AppTheme.textSecondary,
+                                            ),
+                                            children: [
+                                              TextSpan(
+                                                  text: '¿Ya tienes una cuenta? '),
+                                              TextSpan(
+                                                text: 'Inicia sesión',
+                                                style: TextStyle(
+                                                  color: AppTheme.amberAccent,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
                                   ],
                                 ),
                               ],
@@ -407,50 +527,6 @@ class _AuthScreenState extends State<AuthScreen>
                       ],
                     ),
                   ),
-
-                  // Demo quick access
-                  if (_demoUsers.isNotEmpty) ...[
-                    const SizedBox(height: 24),
-                    const Center(
-                      child: Text(
-                        'O entra rápidamente con un usuario demo:',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: AppTheme.textMuted,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      alignment: WrapAlignment.center,
-                      children: _demoUsers.map((u) {
-                        return ActionChip(
-                          avatar: CircleAvatar(
-                            backgroundColor: AppTheme.amberAccent,
-                            child: Text(
-                              u.name.substring(0, 1).toUpperCase(),
-                              style: const TextStyle(
-                                color: Colors.black,
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                          label: Text(u.name),
-                          backgroundColor: AppTheme.surfaceColor,
-                          side: const BorderSide(color: AppTheme.borderColor),
-                          labelStyle: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                          ),
-                          onPressed: () => _handleLogin(u.email),
-                        );
-                      }).toList(),
-                    ),
-                  ],
                 ],
               ),
             ),

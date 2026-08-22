@@ -116,13 +116,10 @@ CREATE INDEX IF NOT EXISTS index_saved_posts_on_user_id ON saved_posts(user_id);
 CREATE INDEX IF NOT EXISTS index_user_interests_on_interest_id ON user_interests(interest_id);
 CREATE INDEX IF NOT EXISTS index_user_interests_on_user_id ON user_interests(user_id);
 
--- 12. Semillas Iniciales (Datos base)
+-- 12. Semillas Iniciales (Solo Bot del sistema para feeds)
 INSERT INTO users (name, email, password_digest, created_at, updated_at)
 VALUES 
-  ('Johan Veloz', 'johan@newsflow.com', '$2a$12$e0M2l1fV44kP9K9K9K9K9e9K9K9K9K9K9K9K9K9K9K9K9K9K9K9K9', NOW(), NOW()),
-  ('Xavier Camacho', 'xavier@newsflow.com', '$2a$12$e0M2l1fV44kP9K9K9K9K9e9K9K9K9K9K9K9K9K9K9K9K9K9K9K9K9', NOW(), NOW()),
-  ('Manuel Matute', 'manuel@newsflow.com', '$2a$12$e0M2l1fV44kP9K9K9K9K9e9K9K9K9K9K9K9K9K9K9K9K9K9K9K9K9', NOW(), NOW()),
-  ('Flews Curador', 'bot@flews.app', '$2a$12$e0M2l1fV44kP9K9K9K9K9e9K9K9K9K9K9K9K9K9K9K9K9K9K9K9K9', NOW(), NOW())
+  ('Flews Bot', 'bot@flews.app', '$2a$12$e0M2l1fV44kP9K9K9K9K9e9K9K9K9K9K9K9K9K9K9K9K9K9K9K9K9', NOW(), NOW())
 ON CONFLICT (email) DO NOTHING;
 
 INSERT INTO communities (name, slug, description, topic, created_at, updated_at)

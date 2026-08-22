@@ -3,26 +3,9 @@
 
 puts "Cargando datos iniciales de Flews..."
 
-johan = User.find_or_create_by!(email: "johan@newsflow.com") do |user|
-  user.name = "Johan Veloz"
-  user.password = "NewsFlow123!"
-  user.password_confirmation = "NewsFlow123!"
-end
-
-xavier = User.find_or_create_by!(email: "xavier@newsflow.com") do |user|
-  user.name = "Xavier Camacho"
-  user.password = "NewsFlow123!"
-  user.password_confirmation = "NewsFlow123!"
-end
-
-manuel = User.find_or_create_by!(email: "manuel@newsflow.com") do |user|
-  user.name = "Manuel Matute"
-  user.password = "NewsFlow123!"
-  user.password_confirmation = "NewsFlow123!"
-end
-
+# Usuario del sistema para curaduría automatizada
 bot = User.find_or_create_by!(email: "bot@flews.app") do |user|
-  user.name = "Flews Curador"
+  user.name = "Flews Bot"
   user.password = "FlewsBot2026!"
   user.password_confirmation = "FlewsBot2026!"
 end
@@ -73,7 +56,7 @@ Post.find_or_create_by!(
   title: "La inteligencia artificial continúa transformando la tecnología"
 ) do |post|
   post.content = "Las nuevas herramientas de inteligencia artificial están cambiando la forma de trabajar y aprender.\n\n• 📊 Relevancia: Alta\n• Fuente: Flews Editorial"
-  post.user = johan
+  post.user = bot
   post.community = tecnologia
   post.post_type = :discussion
   post.status = :published

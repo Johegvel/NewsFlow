@@ -10,48 +10,51 @@ import '../models/report_model.dart';
 import '../models/saved_post_model.dart';
 
 abstract class RemoteApiDataSource {
-  Future<UserModel> login(String email);
-  Future<UserModel> register(String name, String email);
+  Future<UserModel> login(String email, String password);
+  Future<UserModel> register(String name, String email, String password);
   Future<List<UserModel>> fetchAvailableUsers();
-
   Future<List<CommunityModel>> fetchCommunities();
-
   Future<List<PostModel>> fetchPosts({int? communityId, String? filter});
-  Future<PostModel> fetchPost(int postId);
   Future<PostModel> createPost({
     required int communityId,
     required String title,
     required String content,
-    required String postType,
+    required int postType,
     required int userId,
   });
-
   Future<List<CommentModel>> fetchComments(int postId);
   Future<CommentModel> createComment({
     required int postId,
     required String content,
     required int userId,
   });
-
-  Future<void> createReaction({
+  Future<ReactionModel> toggleReaction({
     required int postId,
+    required int kind,
     required int userId,
   });
-
-  Future<void> savePost({
-    required int postId,
-    required int userId,
-  });
-  Future<List<SavedPostModel>> fetchSavedPosts(int userId);
-  Future<void> deleteSavedPost(int savedPostId);
-
-  Future<void> createReport({
+  Future<void> removeReaction(int reactionId);
+  Future<void> reportPost({
     required int postId,
     required String reason,
     required int userId,
   });
-  Future<List<ReportModel>> fetchReports();
-  Future<ReportModel> updateReport(int reportId, String status);
+  Future<void> savePost({
+    required int postId,
+    required int userId,
+  });
+  Future<void> unsavePost({
+    required int postId,
+    required int userId,
+  });
+  Future<List<PostModel>> fetchSavedPosts(int userId);
+  Future<List<InterestModel>> fetchInterests();
+  Future<List<InterestModel>> fetchUserInterests(int userId);
+  Future<List<InterestModel>> updateUserInterests({
+    required int userId,
+    required List<int> interestIds,
+  });
+  Future<List<PostModel>> fetchPersonalizedFeed(int userId);
 }
 
 class RemoteApiDataSourceImpl implements RemoteApiDataSource {
@@ -60,11 +63,14 @@ class RemoteApiDataSourceImpl implements RemoteApiDataSource {
   RemoteApiDataSourceImpl({http.Client? client}) : client = client ?? http.Client();
 
   @override
-  Future<UserModel> login(String email) async {
+  Future<UserModel> login(String email, String password) async {
     final response = await client.post(
       Uri.parse(ApiConstants.login),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'email': email.trim()}),
+      body: jsonEncode({
+        'email': email.trim(),
+        'password': password,
+      }),
     );
 
     final data = jsonDecode(response.body);
@@ -75,13 +81,14 @@ class RemoteApiDataSourceImpl implements RemoteApiDataSource {
   }
 
   @override
-  Future<UserModel> register(String name, String email) async {
+  Future<UserModel> register(String name, String email, String password) async {
     final response = await client.post(
       Uri.parse(ApiConstants.register),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
         'name': name.trim(),
         'email': email.trim(),
+        'password': password,
       }),
     );
 

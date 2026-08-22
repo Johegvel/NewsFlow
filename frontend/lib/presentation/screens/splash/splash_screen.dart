@@ -94,38 +94,24 @@ class _SplashScreenState extends State<SplashScreen>
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Glowing background container
-                    Container(
-                      width: 170,
-                      height: 170,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppTheme.amberAccent
-                                .withValues(alpha: 0.22 * _glowAnimation.value),
-                            blurRadius: 40,
-                            spreadRadius: 8,
-                          ),
-                        ],
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(28),
-                        child: Image.asset(
-                          'assets/images/flews_logo.png',
-                          width: 170,
-                          height: 170,
-                          fit: BoxFit.contain,
-                          errorBuilder: (context, error, stackTrace) =>
-                              const Icon(
-                            Icons.newspaper_rounded,
-                            size: 100,
-                            color: AppTheme.amberAccent,
-                          ),
+                    // Logo sin bordes brillantes ni halos
+                    SizedBox(
+                      width: 140,
+                      height: 140,
+                      child: Image.asset(
+                        'assets/images/flews_logo.png',
+                        width: 140,
+                        height: 140,
+                        fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) =>
+                            const Icon(
+                          Icons.newspaper_rounded,
+                          size: 90,
+                          color: AppTheme.amberAccent,
                         ),
                       ),
                     ),
-                    const SizedBox(height: 28),
+                    const SizedBox(height: 24),
                     // App Name
                     RichText(
                       text: const TextSpan(
