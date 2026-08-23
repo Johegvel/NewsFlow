@@ -382,6 +382,12 @@ Cloud Build se envía con `--async` y el workflow consulta su estado mediante
 puede crear y consultar builds, pero no leer el bucket predeterminado de logs. El polling
 tiene un límite de 20 minutos y no amplía permisos.
 
+El pipeline comprueba que la cuenta de servicio de despliegue pueda leer la imagen antes
+de crear el Job de migración, pero no modifica IAM. El administrador de Google Cloud debe
+conceder manualmente `roles/artifactregistry.reader`, limitado al repositorio `gcr.io`.
+Este permiso permite resolver y descargar la imagen, sin conceder escritura sobre
+artefactos ni administración del proyecto.
+
 ### 6.4. Credenciales y despliegue transitorio
 
 Para permitir el primer despliegue sin volver a guardar credenciales en GitHub, el

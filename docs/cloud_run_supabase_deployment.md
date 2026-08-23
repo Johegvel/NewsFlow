@@ -108,6 +108,22 @@ consultar builds sin necesitar permiso de lectura sobre el bucket predeterminado
 logs. El polling tiene un límite de 20 minutos y cualquier estado terminal fallido
 detiene la migración y el despliegue.
 
+Antes de crear el Job, el workflow comprueba que la cuenta de servicio de despliegue
+pueda leer la imagen publicada. Si la comprobación falla, un administrador de Google
+Cloud debe conceder manualmente el permiso mínimo de lectura:
+
+```bash
+gcloud artifacts repositories add-iam-policy-binding gcr.io \
+  --project [PROJECT_ID] \
+  --location us \
+  --member serviceAccount:[DEPLOYER_SERVICE_ACCOUNT] \
+  --role roles/artifactregistry.reader
+```
+
+El workflow no modifica IAM por sí mismo. `roles/artifactregistry.reader` permite leer y
+descargar imágenes, pero no concede escritura sobre artefactos ni administración del
+proyecto.
+
 ---
 
 ### 💻 Opción B: Despliegue mediante Google Cloud Shell / CLI (`gcloud`)

@@ -191,6 +191,23 @@ jobs:
             exit 1
           fi
 
+      - name: Verify deployer access to the image repository
+        shell: bash
+        run: |
+          deployer_service_account="$(jq -r '.client_email // empty' "${GOOGLE_GHA_CREDS_PATH}")"
+          if [[ -z "${deployer_service_account}" ]]; then
+            echo "::error::Unable to determine the deployer service account."
+            exit 1
+          fi
+
+          if ! gcloud artifacts docker images describe \
+            "gcr.io/${PROJECT_ID}/${SERVICE_NAME}:${GITHUB_SHA}" \
+            --project "${PROJECT_ID}" \
+            --format='value(image_summary.digest)' > /dev/null 2>&1; then
+            echo "::error::The deployer cannot read the published image. A Google Cloud administrator must grant roles/artifactregistry.reader on repository gcr.io to serviceAccount:${deployer_service_account}."
+            exit 1
+          fi
+
       - name: Configure migration job
         run: |
           gcloud run jobs deploy "${SERVICE_NAME}-migrate" \
