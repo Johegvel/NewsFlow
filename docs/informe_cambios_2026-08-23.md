@@ -377,9 +377,10 @@ La credencial de Supabase que estuvo versionada debe considerarse comprometida y
 
 Las migraciones no se ejecutan al iniciar cada contenedor; esto evita carreras cuando Cloud Run crea varias instancias.
 
-Cloud Build usa `--suppress-logs` para evitar un falso fallo del CLI cuando la cuenta de
-servicio puede crear builds, pero no leer el bucket predeterminado de logs. El comando
-continúa esperando y conserva el resultado final de la compilación sin ampliar permisos.
+Cloud Build se envía con `--async` y el workflow consulta su estado mediante
+`gcloud builds describe`. Esto evita un falso fallo del CLI cuando la cuenta de servicio
+puede crear y consultar builds, pero no leer el bucket predeterminado de logs. El polling
+tiene un límite de 20 minutos y no amplía permisos.
 
 ### 6.4. Credenciales y despliegue transitorio
 
