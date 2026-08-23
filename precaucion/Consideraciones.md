@@ -136,15 +136,17 @@ El servicio `flews-backend` en Cloud Run opera con las siguientes variables indi
 
 ---
 
-## 6. Flujo de Trabajo Git & Colaboración
+## 6. Despliegue Automatizado (CI/CD) & Colaboración
 
-1. **Gestión de Commits y Ramas:**
-   * Cada nueva funcionalidad debe desarrollarse en ramas descriptivas (`feature/nombre-feature` o `fix/descripcion-bug`).
-   * No realizar `git push` a `main` sin haber ejecutado previamente `flutter analyze` en el frontend y haber probado la compilación de la imagen Docker en el backend.
-2. **Archivos Ignorados Sensibles:**
-   * Mantener siempre en `.gitignore`: `.env`, `master.key`, `credentials.yml.enc`, `storage/`, `tmp/`, `.dart_tool/`, `android/local.properties`.
-3. **Registro de Cambios (`docs/Updates.md`):**
-   * Toda modificación técnica relevante, nuevo endpoint o refactorización debe documentarse cronológicamente en `docs/Updates.md` para preservar la trazabilidad entre los colaboradores del equipo.
+### 6.1. Despliegue Automático al Backend con Commit
+* **El backend se despliega automáticamente a Google Cloud Run:**
+  Para desplegar cualquier cambio realizado en el backend (`backend/**`), **solo se requiere hacer commit y push a la rama `main`**.
+* El flujo de trabajo automatizado de GitHub Actions ([`.github/workflows/deploy_backend.yml`](file:///c:/Users/xhcg2/OneDrive/Escritorio/X/Proyectos_personales/NewsFlow/.github/workflows/deploy_backend.yml)) detecta los cambios en `backend/`, compila la imagen en Google Cloud Build y actualiza el servicio de Google Cloud Run en tiempo real sin requerir comandos manuales en la consola.
+
+### 6.2. Gestión de Commits y Ramas
+1. Cada nueva funcionalidad debe desarrollarse en ramas descriptivas (`feature/nombre-feature` o `fix/descripcion-bug`).
+2. Antes de fusionar o hacer push a `main`, verificar que `flutter analyze` pase con 0 errores en el frontend.
+3. **Archivos Ignorados Sensibles:** Mantener siempre en `.gitignore`: `.env`, `master.key`, `credentials.yml.enc`, `storage/`, `tmp/`, `.dart_tool/`, `android/local.properties`.
 
 ---
 *Documento redactado para el equipo de desarrollo de Flews. Mantener este archivo actualizado ante cualquier cambio de infraestructura o arquitectura.*
