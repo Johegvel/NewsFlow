@@ -102,6 +102,10 @@ El workflow [`.github/workflows/deploy_backend.yml`](../.github/workflows/deploy
 
 Las migraciones no se ejecutan desde `docker-entrypoint`, evitando carreras cuando Cloud Run inicia varias instancias.
 
+Cloud Build se ejecuta con `--suppress-logs`. La cuenta de servicio puede crear y
+consultar builds, pero no necesita permiso de lectura sobre el bucket predeterminado de
+logs; el workflow sigue esperando y respeta el estado final de la compilación.
+
 ---
 
 ### 💻 Opción B: Despliegue mediante Google Cloud Shell / CLI (`gcloud`)

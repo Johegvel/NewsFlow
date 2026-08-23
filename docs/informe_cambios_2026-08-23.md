@@ -377,6 +377,10 @@ La credencial de Supabase que estuvo versionada debe considerarse comprometida y
 
 Las migraciones no se ejecutan al iniciar cada contenedor; esto evita carreras cuando Cloud Run crea varias instancias.
 
+Cloud Build usa `--suppress-logs` para evitar un falso fallo del CLI cuando la cuenta de
+servicio puede crear builds, pero no leer el bucket predeterminado de logs. El comando
+continúa esperando y conserva el resultado final de la compilación sin ampliar permisos.
+
 ### 6.4. Credenciales y despliegue transitorio
 
 Para permitir el primer despliegue sin volver a guardar credenciales en GitHub, el
