@@ -2,16 +2,21 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../../core/constants/api_constants.dart';
+import '../models/auth_session_model.dart';
 import '../models/user_model.dart';
 import '../models/community_model.dart';
 import '../models/post_model.dart';
 import '../models/comment_model.dart';
 import '../models/report_model.dart';
 import '../models/saved_post_model.dart';
+import '../models/profile_stats_model.dart';
+import '../models/user_preferences_model.dart';
+import '../../domain/entities/user_preferences_entity.dart';
 
 abstract class RemoteApiDataSource {
-  Future<UserModel> login(String email, String password);
-  Future<UserModel> register(String name, String email, String password);
+  void setAuthToken(String? token);
+  Future<AuthSessionModel> login(String email, String password);
+  Future<AuthSessionModel> register(String name, String email, String password);
   Future<List<UserModel>> fetchAvailableUsers();
   Future<List<CommunityModel>> fetchCommunities();
   Future<List<PostModel>> fetchPosts({int? communityId, String? filter});
@@ -29,16 +34,18 @@ abstract class RemoteApiDataSource {
     required String content,
     required int userId,
   });
-  Future<void> createReaction({
-    required int postId,
-    required int userId,
-  });
-  Future<void> savePost({
-    required int postId,
-    required int userId,
-  });
+  Future<int> createReaction({required int postId, required int userId});
+  Future<void> deleteReaction(int reactionId);
+  Future<SavedPostModel> savePost({required int postId, required int userId});
   Future<List<SavedPostModel>> fetchSavedPosts(int userId);
   Future<void> deleteSavedPost(int savedPostId);
+  Future<int> markPostRead(int postId);
+  Future<ProfileStatsModel> fetchProfileStats();
+  Future<UserPreferencesModel> fetchPreferences();
+  Future<UserPreferencesModel> updatePreferences(
+    UserPreferencesEntity preferences,
+  );
+  Future<void> clearReadHistory();
   Future<void> createReport({
     required int postId,
     required String reason,
@@ -50,32 +57,48 @@ abstract class RemoteApiDataSource {
 
 class RemoteApiDataSourceImpl implements RemoteApiDataSource {
   final http.Client client;
+  String? _authToken;
 
-  RemoteApiDataSourceImpl({http.Client? client}) : client = client ?? http.Client();
+  RemoteApiDataSourceImpl({http.Client? client})
+    : client = client ?? http.Client();
+
+  Map<String, String> _headers({bool authenticated = false}) {
+    return {
+      'Content-Type': 'application/json',
+      if (authenticated && _authToken != null)
+        'Authorization': 'Bearer $_authToken',
+    };
+  }
 
   @override
-  Future<UserModel> login(String email, String password) async {
+  void setAuthToken(String? token) {
+    _authToken = token;
+  }
+
+  @override
+  Future<AuthSessionModel> login(String email, String password) async {
     final response = await client.post(
       Uri.parse(ApiConstants.login),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'email': email.trim(),
-        'password': password,
-      }),
+      headers: _headers(),
+      body: jsonEncode({'email': email.trim(), 'password': password}),
     );
 
     final data = jsonDecode(response.body);
     if (response.statusCode == 200) {
-      return UserModel.fromJson(data);
+      return AuthSessionModel.fromJson(data);
     }
     throw Exception(data['error'] ?? 'Error al iniciar sesión');
   }
 
   @override
-  Future<UserModel> register(String name, String email, String password) async {
+  Future<AuthSessionModel> register(
+    String name,
+    String email,
+    String password,
+  ) async {
     final response = await client.post(
       Uri.parse(ApiConstants.register),
-      headers: {'Content-Type': 'application/json'},
+      headers: _headers(),
       body: jsonEncode({
         'name': name.trim(),
         'email': email.trim(),
@@ -85,10 +108,13 @@ class RemoteApiDataSourceImpl implements RemoteApiDataSource {
 
     final data = jsonDecode(response.body);
     if (response.statusCode == 201) {
-      return UserModel.fromJson(data);
+      return AuthSessionModel.fromJson(data);
     }
     throw Exception(
-      data['error'] ?? (data['errors'] is List ? data['errors'].join(', ') : 'Error al registrarse'),
+      data['error'] ??
+          (data['errors'] is List
+              ? data['errors'].join(', ')
+              : 'Error al registrarse'),
     );
   }
 
@@ -115,16 +141,23 @@ class RemoteApiDataSourceImpl implements RemoteApiDataSource {
   @override
   Future<List<PostModel>> fetchPosts({int? communityId, String? filter}) async {
     final queryParams = <String, String>{};
-    if (communityId != null) queryParams['community_id'] = communityId.toString();
+    if (communityId != null) {
+      queryParams['community_id'] = communityId.toString();
+    }
     if (filter != null) queryParams['filter'] = filter;
 
     final baseUri = communityId != null
         ? Uri.parse('${ApiConstants.communities}/$communityId/posts')
         : Uri.parse(ApiConstants.posts);
 
-    final uri = baseUri.replace(queryParameters: queryParams.isNotEmpty ? queryParams : null);
+    final uri = baseUri.replace(
+      queryParameters: queryParams.isNotEmpty ? queryParams : null,
+    );
 
-    final response = await client.get(uri);
+    final response = await client.get(
+      uri,
+      headers: _headers(authenticated: true),
+    );
     if (response.statusCode == 200) {
       final List list = jsonDecode(response.body);
       return list.map((e) => PostModel.fromJson(e)).toList();
@@ -134,7 +167,10 @@ class RemoteApiDataSourceImpl implements RemoteApiDataSource {
 
   @override
   Future<PostModel> fetchPost(int postId) async {
-    final response = await client.get(Uri.parse('${ApiConstants.posts}/$postId'));
+    final response = await client.get(
+      Uri.parse('${ApiConstants.posts}/$postId'),
+      headers: _headers(authenticated: true),
+    );
     if (response.statusCode == 200) {
       return PostModel.fromJson(jsonDecode(response.body));
     }
@@ -151,7 +187,7 @@ class RemoteApiDataSourceImpl implements RemoteApiDataSource {
   }) async {
     final response = await client.post(
       Uri.parse('${ApiConstants.communities}/$communityId/posts'),
-      headers: {'Content-Type': 'application/json'},
+      headers: _headers(authenticated: true),
       body: jsonEncode({
         'post': {
           'user_id': userId,
@@ -171,7 +207,9 @@ class RemoteApiDataSourceImpl implements RemoteApiDataSource {
 
   @override
   Future<List<CommentModel>> fetchComments(int postId) async {
-    final response = await client.get(Uri.parse('${ApiConstants.posts}/$postId/comments'));
+    final response = await client.get(
+      Uri.parse('${ApiConstants.posts}/$postId/comments'),
+    );
     if (response.statusCode == 200) {
       final List list = jsonDecode(response.body);
       return list.map((e) => CommentModel.fromJson(e)).toList();
@@ -187,12 +225,9 @@ class RemoteApiDataSourceImpl implements RemoteApiDataSource {
   }) async {
     final response = await client.post(
       Uri.parse('${ApiConstants.posts}/$postId/comments'),
-      headers: {'Content-Type': 'application/json'},
+      headers: _headers(authenticated: true),
       body: jsonEncode({
-        'comment': {
-          'user_id': userId,
-          'content': content,
-        },
+        'comment': {'user_id': userId, 'content': content},
       }),
     );
 
@@ -203,43 +238,62 @@ class RemoteApiDataSourceImpl implements RemoteApiDataSource {
   }
 
   @override
-  Future<void> createReaction({required int postId, required int userId}) async {
+  Future<int> createReaction({required int postId, required int userId}) async {
     final response = await client.post(
       Uri.parse('${ApiConstants.posts}/$postId/reactions'),
-      headers: {'Content-Type': 'application/json'},
+      headers: _headers(authenticated: true),
       body: jsonEncode({
-        'reaction': {
-          'user_id': userId,
-          'kind': 'like',
-        },
+        'reaction': {'user_id': userId, 'kind': 'like'},
       }),
     );
 
-    if (response.statusCode != 201) {
-      throw Exception('Error al registrar reacción');
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      final data = jsonDecode(response.body);
+      final id = data is Map<String, dynamic> ? data['id'] : null;
+      if (id is int) return id;
+      final parsedId = int.tryParse(id?.toString() ?? '');
+      if (parsedId != null) return parsedId;
+    }
+    throw Exception('Error al registrar reacción');
+  }
+
+  @override
+  Future<void> deleteReaction(int reactionId) async {
+    final response = await client.delete(
+      Uri.parse('${ApiConstants.baseUrl}/reactions/$reactionId'),
+      headers: _headers(authenticated: true),
+    );
+    if (response.statusCode != 204) {
+      throw Exception('Error al eliminar la reacción');
     }
   }
 
   @override
-  Future<void> savePost({required int postId, required int userId}) async {
+  Future<SavedPostModel> savePost({
+    required int postId,
+    required int userId,
+  }) async {
     final response = await client.post(
       Uri.parse('${ApiConstants.posts}/$postId/saved_posts'),
-      headers: {'Content-Type': 'application/json'},
+      headers: _headers(authenticated: true),
       body: jsonEncode({
-        'saved_post': {
-          'user_id': userId,
-        },
+        'saved_post': {'user_id': userId},
       }),
     );
 
-    if (response.statusCode != 201 && response.statusCode != 200) {
-      throw Exception('Error al guardar publicación');
+    if (response.statusCode == 201 || response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      if (data is Map<String, dynamic>) return SavedPostModel.fromJson(data);
     }
+    throw Exception('Error al guardar publicación');
   }
 
   @override
   Future<List<SavedPostModel>> fetchSavedPosts(int userId) async {
-    final response = await client.get(Uri.parse('${ApiConstants.baseUrl}/users/$userId/saved_posts'));
+    final response = await client.get(
+      Uri.parse('${ApiConstants.baseUrl}/users/$userId/saved_posts'),
+      headers: _headers(authenticated: true),
+    );
     if (response.statusCode == 200) {
       final List list = jsonDecode(response.body);
       return list.map((e) => SavedPostModel.fromJson(e)).toList();
@@ -249,22 +303,108 @@ class RemoteApiDataSourceImpl implements RemoteApiDataSource {
 
   @override
   Future<void> deleteSavedPost(int savedPostId) async {
-    final response = await client.delete(Uri.parse('${ApiConstants.savedPosts}/$savedPostId'));
+    final response = await client.delete(
+      Uri.parse('${ApiConstants.savedPosts}/$savedPostId'),
+      headers: _headers(authenticated: true),
+    );
     if (response.statusCode != 204) {
       throw Exception('Error al eliminar publicación guardada');
     }
   }
 
   @override
-  Future<void> createReport({required int postId, required String reason, required int userId}) async {
+  Future<int> markPostRead(int postId) async {
+    final response = await client.post(
+      Uri.parse('${ApiConstants.posts}/$postId/post_reads'),
+      headers: _headers(authenticated: true),
+    );
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      final data = jsonDecode(response.body);
+      if (data is Map<String, dynamic>) {
+        final count = data['reads_count'];
+        return count is int
+            ? count
+            : int.tryParse(count?.toString() ?? '') ?? 0;
+      }
+    }
+    throw Exception('Error al registrar la lectura');
+  }
+
+  @override
+  Future<ProfileStatsModel> fetchProfileStats() async {
+    final response = await client.get(
+      Uri.parse(ApiConstants.profile),
+      headers: _headers(authenticated: true),
+    );
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      if (data is Map<String, dynamic>) return ProfileStatsModel.fromJson(data);
+    }
+    throw Exception('Error al cargar las estadísticas del perfil');
+  }
+
+  @override
+  Future<UserPreferencesModel> fetchPreferences() async {
+    final response = await client.get(
+      Uri.parse(ApiConstants.preferences),
+      headers: _headers(authenticated: true),
+    );
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      if (data is Map<String, dynamic>) {
+        return UserPreferencesModel.fromJson(data);
+      }
+    }
+    throw Exception('Error al cargar las preferencias');
+  }
+
+  @override
+  Future<UserPreferencesModel> updatePreferences(
+    UserPreferencesEntity preferences,
+  ) async {
+    final response = await client.patch(
+      Uri.parse(ApiConstants.preferences),
+      headers: _headers(authenticated: true),
+      body: jsonEncode({
+        'preferences': {
+          'reading_history_enabled': preferences.readingHistoryEnabled,
+          'personalization_enabled': preferences.personalizationEnabled,
+          'morning_digest_enabled': preferences.morningDigestEnabled,
+          'curation_alerts_enabled': preferences.curationAlertsEnabled,
+        },
+      }),
+    );
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      if (data is Map<String, dynamic>) {
+        return UserPreferencesModel.fromJson(data);
+      }
+    }
+    throw Exception('Error al guardar las preferencias');
+  }
+
+  @override
+  Future<void> clearReadHistory() async {
+    final response = await client.delete(
+      Uri.parse(ApiConstants.readHistory),
+      headers: _headers(authenticated: true),
+    );
+    if (response.statusCode != 204) {
+      throw Exception('Error al borrar el historial de lectura');
+    }
+  }
+
+  @override
+  Future<void> createReport({
+    required int postId,
+    required String reason,
+    required int userId,
+  }) async {
     final response = await client.post(
       Uri.parse('${ApiConstants.posts}/$postId/reports'),
-      headers: {'Content-Type': 'application/json'},
+      headers: _headers(authenticated: true),
       body: jsonEncode({
-        'report': {
-          'user_id': userId,
-          'reason': reason,
-        },
+        'report': {'user_id': userId, 'reason': reason},
       }),
     );
 
@@ -275,7 +415,10 @@ class RemoteApiDataSourceImpl implements RemoteApiDataSource {
 
   @override
   Future<List<ReportModel>> fetchReports() async {
-    final response = await client.get(Uri.parse(ApiConstants.reports));
+    final response = await client.get(
+      Uri.parse(ApiConstants.reports),
+      headers: _headers(authenticated: true),
+    );
     if (response.statusCode == 200) {
       final List list = jsonDecode(response.body);
       return list.map((e) => ReportModel.fromJson(e)).toList();
@@ -287,11 +430,9 @@ class RemoteApiDataSourceImpl implements RemoteApiDataSource {
   Future<ReportModel> updateReport(int reportId, String status) async {
     final response = await client.patch(
       Uri.parse('${ApiConstants.reports}/$reportId'),
-      headers: {'Content-Type': 'application/json'},
+      headers: _headers(authenticated: true),
       body: jsonEncode({
-        'report': {
-          'status': status,
-        },
+        'report': {'status': status},
       }),
     );
 

@@ -19,51 +19,37 @@ class FlewsNotificationHelper {
         elevation: 12,
         behavior: SnackBarBehavior.floating,
         backgroundColor: Colors.transparent,
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
         padding: EdgeInsets.zero,
         content: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: const Color(0xFF0F141F),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: AppTheme.amberAccent.withValues(alpha: 0.5),
-              width: 1.5,
-            ),
+            color: AppTheme.surfaceColor,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppTheme.amberAccent, width: 1.5),
             boxShadow: [
-              BoxShadow(
-                color: AppTheme.amberAccent.withValues(alpha: 0.15),
-                blurRadius: 18,
-                spreadRadius: 1,
-                offset: const Offset(0, 4),
-              ),
               const BoxShadow(
-                color: Colors.black54,
+                color: Colors.black87,
                 blurRadius: 12,
-                offset: Offset(0, 6),
+                offset: Offset(0, 8),
               ),
             ],
           ),
           child: Row(
             children: [
-              // Flews Official Logo Badge for instant recognition
               Container(
-                width: 42,
-                height: 42,
+                width: 40,
+                height: 40,
                 decoration: BoxDecoration(
-                  color: AppTheme.darkBackground,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: AppTheme.amberAccent.withValues(alpha: 0.4),
-                    width: 1,
-                  ),
+                  color: AppTheme.amberAccent.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(9),
+                  borderRadius: BorderRadius.circular(8),
                   child: Image.asset(
                     'assets/images/flews_notification_icon.png',
-                    width: 42,
-                    height: 42,
+                    width: 40,
+                    height: 40,
                     fit: BoxFit.contain,
                     errorBuilder: (context, error, stackTrace) => const Icon(
                       Icons.newspaper_rounded,
@@ -73,8 +59,7 @@ class FlewsNotificationHelper {
                   ),
                 ),
               ),
-              const SizedBox(width: 14),
-              // Notification Content
+              const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -82,31 +67,12 @@ class FlewsNotificationHelper {
                   children: [
                     Row(
                       children: [
-                        RichText(
-                          text: const TextSpan(
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 0.5,
-                              color: Colors.white,
-                            ),
-                            children: [
-                              TextSpan(text: 'FLEW'),
-                              TextSpan(
-                                text: 'S',
-                                style: TextStyle(
-                                  color: AppTheme.amberAccent,
-                                ),
-                              ),
-                              TextSpan(
-                                text: ' • AVISO',
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppTheme.textSecondary,
-                                ),
-                              ),
-                            ],
+                        const Text(
+                          'FLEWS • AVISO',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            color: AppTheme.amberAccent,
                           ),
                         ),
                       ],
@@ -116,7 +82,7 @@ class FlewsNotificationHelper {
                       title,
                       style: const TextStyle(
                         fontSize: 14,
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w600,
                         color: Colors.white,
                       ),
                       maxLines: 1,
@@ -126,7 +92,7 @@ class FlewsNotificationHelper {
                       message,
                       style: const TextStyle(
                         fontSize: 12,
-                        color: Color(0xFFCBD5E1),
+                        color: AppTheme.textSecondary,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,

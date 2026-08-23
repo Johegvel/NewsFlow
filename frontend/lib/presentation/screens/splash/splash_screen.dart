@@ -1,5 +1,7 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
+
 import '../../../core/theme/app_theme.dart';
 import '../../../service_locator.dart';
 import '../auth/auth_screen.dart';
@@ -14,53 +16,35 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _scaleAnimation;
-  late Animation<double> _fadeAnimation;
+  late final AnimationController _controller;
+  late final Animation<double> _pulse;
 
   @override
   void initState() {
     super.initState();
-
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1600),
-    );
-
-    _scaleAnimation = Tween<double>(begin: 0.82, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: const Interval(0.0, 0.7, curve: Curves.easeOutBack),
-      ),
-    );
-
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: const Interval(0.0, 0.6, curve: Curves.easeIn),
-      ),
-    );
-
-    _controller.forward();
+      duration: const Duration(milliseconds: 1300),
+    )..repeat(reverse: true);
+    _pulse = Tween<double>(
+      begin: 0.97,
+      end: 1.02,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
     _checkSessionAndNavigate();
   }
 
   Future<void> _checkSessionAndNavigate() async {
     final user = await ServiceLocator.authRepository.loadCurrentSession();
-
-    await Future.delayed(const Duration(milliseconds: 2000));
-
+    await Future<void>.delayed(const Duration(milliseconds: 1900));
     if (!mounted) return;
 
-    final targetPage = user != null ? const HomePage() : const AuthScreen();
-
     Navigator.of(context).pushReplacement(
-      PageRouteBuilder(
-        transitionDuration: const Duration(milliseconds: 600),
-        pageBuilder: (context, animation, secondaryAnimation) => targetPage,
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          return FadeTransition(opacity: animation, child: child);
-        },
+      PageRouteBuilder<void>(
+        transitionDuration: const Duration(milliseconds: 450),
+        pageBuilder: (_, animation, _) => FadeTransition(
+          opacity: animation,
+          child: user == null ? const AuthScreen() : const HomePage(),
+        ),
       ),
     );
   }
@@ -74,82 +58,73 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.darkBackground,
-      body: Center(
-        child: AnimatedBuilder(
-          animation: _controller,
-          builder: (context, child) {
-            return FadeTransition(
-              opacity: _fadeAnimation,
-              child: Transform.scale(
-                scale: _scaleAnimation.value,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // Logo sin bordes brillantes ni halos
-                    SizedBox(
-                      width: 140,
-                      height: 140,
-                      child: Image.asset(
-                        'assets/images/flews_logo.png',
-                        width: 140,
-                        height: 140,
-                        fit: BoxFit.contain,
-                        errorBuilder: (context, error, stackTrace) =>
-                            const Icon(
-                          Icons.newspaper_rounded,
-                          size: 90,
-                          color: AppTheme.amberAccent,
-                        ),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 24, 24, 34),
+          child: Column(
+            children: [
+              const Spacer(flex: 3),
+              ScaleTransition(
+                scale: _pulse,
+                child: Container(
+                  width: 260,
+                  height: 200,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppTheme.amberAccent.withValues(alpha: 0.08),
+                        blurRadius: 64,
+                        spreadRadius: 8,
                       ),
+                    ],
+                  ),
+                  child: Image.asset(
+                    'assets/images/flews_logo.png',
+                    width: 220,
+                    height: 165,
+                    fit: BoxFit.contain,
+                    errorBuilder: (_, _, _) => const Icon(
+                      Icons.newspaper_rounded,
+                      size: 100,
+                      color: AppTheme.amberAccent,
                     ),
-                    const SizedBox(height: 24),
-                    // App Name
-                    RichText(
-                      text: const TextSpan(
-                        style: TextStyle(
-                          fontSize: 34,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 1.5,
-                          color: Colors.white,
-                        ),
-                        children: [
-                          TextSpan(text: 'Flew'),
-                          TextSpan(
-                            text: 's',
-                            style: TextStyle(
-                              color: AppTheme.amberAccent,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'FEW NEWS • MENOS RUIDO, MAYOR CALIDAD',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 2.2,
-                        color: AppTheme.textSecondary,
-                      ),
-                    ),
-                    const SizedBox(height: 48),
-                    // Amber Progress Loader
-                    const SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2.5,
-                        valueColor:
-                            AlwaysStoppedAnimation<Color>(AppTheme.amberAccent),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
-            );
-          },
+              const SizedBox(height: 36),
+              Text(
+                'MENOS RUIDO, MAYOR\nCALIDAD',
+                textAlign: TextAlign.center,
+                style: AppTheme.editorial(fontSize: 32, height: 1.12),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'INFORMATIVA',
+                style: TextStyle(
+                  color: AppTheme.amberAccent,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 2.5,
+                ),
+              ),
+              const Spacer(flex: 3),
+              const SizedBox(
+                width: 36,
+                height: 36,
+                child: CircularProgressIndicator(
+                  color: AppTheme.amberAccent,
+                  strokeWidth: 3,
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Cargando la síntesis diaria...',
+                style: TextStyle(color: AppTheme.textSecondary, fontSize: 12),
+              ),
+            ],
+          ),
         ),
       ),
     );

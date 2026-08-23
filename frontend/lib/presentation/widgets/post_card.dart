@@ -1,31 +1,23 @@
 import 'package:flutter/material.dart';
+
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/post_formatters.dart';
 import '../../domain/entities/post_entity.dart';
 
 class PostCard extends StatelessWidget {
   final PostEntity post;
   final VoidCallback onTap;
 
-  const PostCard({
-    super.key,
-    required this.post,
-    required this.onTap,
-  });
+  const PostCard({super.key, required this.post, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
+    final metadata = parsePostContent(post.content);
     return Container(
       decoration: BoxDecoration(
         color: AppTheme.surfaceColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.borderColor, width: 1),
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black26,
-            blurRadius: 10,
-            offset: Offset(0, 4),
-          ),
-        ],
+        border: Border.all(color: AppTheme.borderColor, width: 1.5),
       ),
       child: Material(
         color: Colors.transparent,
@@ -39,75 +31,100 @@ class PostCard extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: AppTheme.darkBackground,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: AppTheme.borderColor),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.groups_rounded, size: 14, color: AppTheme.amberAccent),
-                          const SizedBox(width: 5),
-                          Text(
-                            post.communityName,
-                            style: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ],
-                      ),
+                    _Badge(
+                      text:
+                          '${communityEmoji(post.communitySlug, post.communityName)} ${post.communityName}',
                     ),
                     const Spacer(),
-                    const Icon(Icons.arrow_forward_ios_rounded, size: 12, color: AppTheme.textMuted),
+                    if (metadata.relevance != null)
+                      Text(
+                        '● ${metadata.relevance}',
+                        style: const TextStyle(
+                          color: AppTheme.amberAccent,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                   ],
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 13),
                 Text(
                   post.title,
-                  maxLines: 2,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTheme.editorial(fontSize: 23, height: 1.12),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  metadata.body,
+                  maxLines: 3,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    height: 1.25,
+                    color: AppTheme.bodyText,
+                    fontSize: 13,
+                    height: 1.4,
                   ),
                 ),
-                const SizedBox(height: 6),
-                Expanded(
-                  child: Text(
-                    post.content,
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: AppTheme.textSecondary,
-                      height: 1.35,
-                    ),
-                  ),
-                ),
+                const SizedBox(height: 14),
+                const Divider(height: 1),
+                const SizedBox(height: 10),
                 Row(
                   children: [
-                    const Icon(Icons.person_outline_rounded, size: 13, color: AppTheme.textMuted),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Por ${post.userName}',
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: AppTheme.textMuted,
-                        fontWeight: FontWeight.w500,
+                    Expanded(
+                      child: Text(
+                        metadata.source ?? 'Curado por Flews',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: AppTheme.textSecondary,
+                          fontSize: 12,
+                        ),
                       ),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      formatRelativeDate(post.publishedAt),
+                      style: const TextStyle(
+                        color: AppTheme.textMuted,
+                        fontSize: 11,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    const Icon(
+                      Icons.chevron_right_rounded,
+                      color: AppTheme.amberAccent,
+                      size: 18,
                     ),
                   ],
                 ),
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _Badge extends StatelessWidget {
+  final String text;
+
+  const _Badge({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: AppTheme.darkBackground,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(
+          color: AppTheme.bodyText,
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
         ),
       ),
     );

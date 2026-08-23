@@ -49,7 +49,7 @@ class FlewsAppBarTitle extends StatelessWidget {
             RichText(
               text: TextSpan(
                 style: TextStyle(
-                  fontFamily: 'Roboto',
+                  fontFamily: AppTheme.sansFont,
                   fontSize: fontSize,
                   fontWeight: FontWeight.w900,
                   letterSpacing: 0.5,
@@ -59,9 +59,7 @@ class FlewsAppBarTitle extends StatelessWidget {
                   TextSpan(text: 'Flew'),
                   TextSpan(
                     text: 's',
-                    style: TextStyle(
-                      color: AppTheme.amberAccent,
-                    ),
+                    style: TextStyle(color: AppTheme.amberAccent),
                   ),
                 ],
               ),

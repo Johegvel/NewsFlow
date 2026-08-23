@@ -1,7 +1,7 @@
 module Api
   module V1
     class UserInterestsController < ApplicationController
-      before_action :authenticate_user!, only: [:update]
+      before_action :authenticate_user!
 
       def show
         user = current_user

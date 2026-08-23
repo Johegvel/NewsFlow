@@ -19,30 +19,39 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<UserEntity?> loadCurrentSession() async {
-    _cachedUser = await localDataSource.getStoredUser();
+    final session = await localDataSource.getStoredSession();
+    remoteDataSource.setAuthToken(session?.token);
+    _cachedUser = session?.user;
     return _cachedUser;
   }
 
   @override
   Future<UserEntity> login(String email, String password) async {
-    final userModel = await remoteDataSource.login(email, password);
-    await localDataSource.saveUser(userModel);
-    _cachedUser = userModel;
-    return userModel;
+    final session = await remoteDataSource.login(email, password);
+    await localDataSource.saveSession(session);
+    remoteDataSource.setAuthToken(session.token);
+    _cachedUser = session.user;
+    return session.user;
   }
 
   @override
-  Future<UserEntity> register(String name, String email, String password) async {
-    final userModel = await remoteDataSource.register(name, email, password);
-    await localDataSource.saveUser(userModel);
-    _cachedUser = userModel;
-    return userModel;
+  Future<UserEntity> register(
+    String name,
+    String email,
+    String password,
+  ) async {
+    final session = await remoteDataSource.register(name, email, password);
+    await localDataSource.saveSession(session);
+    remoteDataSource.setAuthToken(session.token);
+    _cachedUser = session.user;
+    return session.user;
   }
 
   @override
   Future<void> logout() async {
     _cachedUser = null;
-    await localDataSource.clearUser();
+    remoteDataSource.setAuthToken(null);
+    await localDataSource.clearSession();
   }
 
   @override

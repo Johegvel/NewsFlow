@@ -18,14 +18,10 @@ abstract class PostRepository {
     required String content,
     required int userId,
   });
-  Future<void> createReaction({
-    required int postId,
-    required int userId,
-  });
-  Future<void> savePost({
-    required int postId,
-    required int userId,
-  });
+  Future<int> createReaction({required int postId, required int userId});
+  Future<void> deleteReaction(int reactionId);
+  Future<SavedPostEntity> savePost({required int postId, required int userId});
   Future<List<SavedPostEntity>> fetchSavedPosts(int userId);
   Future<void> deleteSavedPost(int savedPostId);
+  Future<int> markPostRead(int postId);
 }

@@ -3,10 +3,12 @@ import 'data/datasources/remote_api_datasource.dart';
 import 'data/repositories_impl/auth_repository_impl.dart';
 import 'data/repositories_impl/community_repository_impl.dart';
 import 'data/repositories_impl/post_repository_impl.dart';
+import 'data/repositories_impl/profile_repository_impl.dart';
 import 'data/repositories_impl/report_repository_impl.dart';
 import 'domain/repositories/auth_repository.dart';
 import 'domain/repositories/community_repository.dart';
 import 'domain/repositories/post_repository.dart';
+import 'domain/repositories/profile_repository.dart';
 import 'domain/repositories/report_repository.dart';
 
 class ServiceLocator {
@@ -15,6 +17,7 @@ class ServiceLocator {
 
   static late final AuthRepository authRepository;
   static late final PostRepository postRepository;
+  static late final ProfileRepository profileRepository;
   static late final CommunityRepository communityRepository;
   static late final ReportRepository reportRepository;
 
@@ -27,7 +30,9 @@ class ServiceLocator {
       localDataSource: localDataSource,
     );
 
-    postRepository = PostRepositoryImpl(
+    postRepository = PostRepositoryImpl(remoteDataSource: remoteDataSource);
+
+    profileRepository = ProfileRepositoryImpl(
       remoteDataSource: remoteDataSource,
     );
 
@@ -35,8 +40,6 @@ class ServiceLocator {
       remoteDataSource: remoteDataSource,
     );
 
-    reportRepository = ReportRepositoryImpl(
-      remoteDataSource: remoteDataSource,
-    );
+    reportRepository = ReportRepositoryImpl(remoteDataSource: remoteDataSource);
   }
 }

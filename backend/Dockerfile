@@ -1,7 +1,7 @@
 # syntax = docker/dockerfile:1
 
 # Base stage
-ARG RUBY_VERSION=3.4.2
+ARG RUBY_VERSION=3.4.10
 FROM ruby:$RUBY_VERSION-slim AS base
 
 WORKDIR /rails
@@ -54,6 +54,6 @@ USER 1000:1000
 ENV PORT=8080
 EXPOSE 8080
 
-# Entrypoint prepares the database and boots Puma
+# Database migrations run in a dedicated Cloud Run Job before this service deploys.
 ENTRYPOINT ["/rails/bin/docker-entrypoint"]
 CMD ["bundle", "exec", "puma", "-C", "config/puma.rb"]

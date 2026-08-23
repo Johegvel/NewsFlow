@@ -1,37 +1,43 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../models/user_model.dart';
+import '../models/auth_session_model.dart';
 
 abstract class LocalStorageDataSource {
-  Future<UserModel?> getStoredUser();
-  Future<void> saveUser(UserModel user);
-  Future<void> clearUser();
+  Future<AuthSessionModel?> getStoredSession();
+  Future<void> saveSession(AuthSessionModel session);
+  Future<void> clearSession();
 }
 
 class LocalStorageDataSourceImpl implements LocalStorageDataSource {
-  static const String _userSessionKey = 'flews_user_session_clean_v1';
+  static const String _sessionKey = 'flews_auth_session_v2';
+  static const String _legacyUserSessionKey = 'flews_user_session_clean_v1';
 
   @override
-  Future<UserModel?> getStoredUser() async {
+  Future<AuthSessionModel?> getStoredSession() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final userString = prefs.getString(_userSessionKey);
-      if (userString != null && userString.isNotEmpty) {
-        return UserModel.fromJson(jsonDecode(userString));
+      final sessionString = prefs.getString(_sessionKey);
+      if (sessionString != null && sessionString.isNotEmpty) {
+        final decoded = jsonDecode(sessionString);
+        if (decoded is Map<String, dynamic>) {
+          return AuthSessionModel.fromJson(decoded);
+        }
       }
     } catch (_) {}
     return null;
   }
 
   @override
-  Future<void> saveUser(UserModel user) async {
+  Future<void> saveSession(AuthSessionModel session) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_userSessionKey, jsonEncode(user.toJson()));
+    await prefs.setString(_sessionKey, jsonEncode(session.toJson()));
+    await prefs.remove(_legacyUserSessionKey);
   }
 
   @override
-  Future<void> clearUser() async {
+  Future<void> clearSession() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_userSessionKey);
+    await prefs.remove(_sessionKey);
+    await prefs.remove(_legacyUserSessionKey);
   }
 }

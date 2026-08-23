@@ -15,6 +15,8 @@ class PostModel extends PostEntity {
     super.communitySlug,
     super.commentsCount = 0,
     super.reactionsCount = 0,
+    super.viewerReactionId,
+    super.viewerSavedPostId,
   });
 
   factory PostModel.fromJson(Map<String, dynamic> json) {
@@ -28,13 +30,26 @@ class PostModel extends PostEntity {
       postType: json['post_type'] as String?,
       status: json['status'] as String?,
       publishedAt: json['published_at'] as String?,
-      userId: userJson['id'] is int ? userJson['id'] : int.tryParse(userJson['id']?.toString() ?? '1') ?? 1,
+      userId: userJson['id'] is int
+          ? userJson['id']
+          : int.tryParse(userJson['id']?.toString() ?? '1') ?? 1,
       userName: userJson['name'] as String? ?? 'Usuario',
-      communityId: communityJson['id'] is int ? communityJson['id'] : int.tryParse(communityJson['id']?.toString() ?? '1') ?? 1,
+      communityId: communityJson['id'] is int
+          ? communityJson['id']
+          : int.tryParse(communityJson['id']?.toString() ?? '1') ?? 1,
       communityName: communityJson['name'] as String? ?? 'General',
       communitySlug: communityJson['slug'] as String?,
       commentsCount: json['comments_count'] is int ? json['comments_count'] : 0,
-      reactionsCount: json['reactions_count'] is int ? json['reactions_count'] : 0,
+      reactionsCount: json['reactions_count'] is int
+          ? json['reactions_count']
+          : 0,
+      viewerReactionId: _nullableInt(json['viewer_reaction_id']),
+      viewerSavedPostId: _nullableInt(json['viewer_saved_post_id']),
     );
+  }
+
+  static int? _nullableInt(dynamic value) {
+    if (value == null) return null;
+    return value is int ? value : int.tryParse(value.toString());
   }
 }

@@ -11,7 +11,7 @@ class PostTest < ActiveSupport::TestCase
 
     community = Community.create!(
       name: "Tecnología",
-      slug: "tecnologia",
+      slug: "tecnologia-#{SecureRandom.hex(4)}",
       topic: "Tecnología"
     )
 

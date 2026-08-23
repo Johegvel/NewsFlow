@@ -1,12 +1,14 @@
 # frozen_string_literal: true
 
-require 'net/http'
-require 'json'
-require 'uri'
+require "net/http"
+require "json"
+require "uri"
 
 module NewsIngestion
   module Sources
     class BaseSource
+      MAX_REDIRECTS = 3
+
       attr_reader :options
 
       def initialize(options = {})
@@ -30,18 +32,8 @@ module NewsIngestion
       protected
 
       def get_json(url_str, headers = {})
-        uri = URI.parse(url_str)
-        http = Net::HTTP.new(uri.host, uri.port)
-        http.use_ssl = (uri.scheme == 'https')
-        http.read_timeout = 10
-        http.open_timeout = 5
-
-        request = Net::HTTP::Get.new(uri.request_uri)
-        request['User-Agent'] = 'FlewsBot/1.0 (Curated News Ingestor; contact@flews.app)'
-        headers.each { |k, v| request[k] = v }
-
-        response = http.request(request)
-        return nil unless response.is_a?(Net::HTTPSuccess)
+        response = get_response(url_str, headers)
+        return nil unless response
 
         JSON.parse(response.body)
       rescue StandardError => e
@@ -50,21 +42,41 @@ module NewsIngestion
       end
 
       def get_xml(url_str)
+        response = get_response(url_str)
+        response&.body
+      rescue StandardError => e
+        Rails.logger.error("[NewsIngestion::BaseSource] Error al consultar RSS #{url_str}: #{e.message}")
+        nil
+      end
+
+      private
+
+      def get_response(url_str, headers = {}, redirects_remaining = MAX_REDIRECTS)
         uri = URI.parse(url_str)
         http = Net::HTTP.new(uri.host, uri.port)
-        http.use_ssl = (uri.scheme == 'https')
+        http.use_ssl = (uri.scheme == "https")
         http.read_timeout = 10
         http.open_timeout = 5
 
         request = Net::HTTP::Get.new(uri.request_uri)
-        request['User-Agent'] = 'FlewsBot/1.0 (Curated News Ingestor)'
+        request["User-Agent"] = "FlewsBot/1.0 (Curated News Ingestor; contact@flews.app)"
+        headers.each { |key, value| request[key] = value }
 
         response = http.request(request)
-        return nil unless response.is_a?(Net::HTTPSuccess)
+        return response if response.is_a?(Net::HTTPSuccess)
 
-        response.body
-      rescue StandardError => e
-        Rails.logger.error("[NewsIngestion::BaseSource] Error al consultar RSS #{url_str}: #{e.message}")
+        if response.is_a?(Net::HTTPRedirection) && redirects_remaining.positive?
+          location = response["location"]
+          return nil if location.blank?
+
+          redirect_url = URI.join(uri.to_s, location).to_s
+          return get_response(redirect_url, headers, redirects_remaining - 1)
+        end
+
+        Rails.logger.warn(
+          "[NewsIngestion::BaseSource] Respuesta HTTP #{response.code} al consultar #{url_str}"
+        )
+
         nil
       end
     end

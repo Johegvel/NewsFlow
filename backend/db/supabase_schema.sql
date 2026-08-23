@@ -102,7 +102,29 @@ CREATE TABLE IF NOT EXISTS saved_posts (
     CONSTRAINT index_saved_posts_on_user_and_post UNIQUE (user_id, post_id)
 );
 
--- 11. Índices de Rendimiento
+-- 11. Tabla: Post Reads (Historial de lectura único por usuario)
+CREATE TABLE IF NOT EXISTS post_reads (
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    post_id BIGINT NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+    created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW(),
+    CONSTRAINT index_post_reads_on_user_and_post UNIQUE (user_id, post_id)
+);
+
+-- 12. Tabla: User Preferences (Privacidad y notificaciones)
+CREATE TABLE IF NOT EXISTS user_preferences (
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+    reading_history_enabled BOOLEAN NOT NULL DEFAULT TRUE,
+    personalization_enabled BOOLEAN NOT NULL DEFAULT TRUE,
+    morning_digest_enabled BOOLEAN NOT NULL DEFAULT TRUE,
+    curation_alerts_enabled BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+-- 13. Índices de Rendimiento
 CREATE INDEX IF NOT EXISTS index_comments_on_post_id ON comments(post_id);
 CREATE INDEX IF NOT EXISTS index_comments_on_user_id ON comments(user_id);
 CREATE INDEX IF NOT EXISTS index_posts_on_community_id ON posts(community_id);
@@ -113,10 +135,12 @@ CREATE INDEX IF NOT EXISTS index_reports_on_post_id ON reports(post_id);
 CREATE INDEX IF NOT EXISTS index_reports_on_user_id ON reports(user_id);
 CREATE INDEX IF NOT EXISTS index_saved_posts_on_post_id ON saved_posts(post_id);
 CREATE INDEX IF NOT EXISTS index_saved_posts_on_user_id ON saved_posts(user_id);
+CREATE INDEX IF NOT EXISTS index_post_reads_on_post_id ON post_reads(post_id);
+CREATE INDEX IF NOT EXISTS index_post_reads_on_user_id ON post_reads(user_id);
 CREATE INDEX IF NOT EXISTS index_user_interests_on_interest_id ON user_interests(interest_id);
 CREATE INDEX IF NOT EXISTS index_user_interests_on_user_id ON user_interests(user_id);
 
--- 12. Semillas Iniciales (Solo Bot del sistema para feeds)
+-- 14. Semillas Iniciales (Solo Bot del sistema para feeds)
 INSERT INTO users (name, email, password_digest, created_at, updated_at)
 VALUES 
   ('Flews Bot', 'bot@flews.app', '$2a$12$e0M2l1fV44kP9K9K9K9K9e9K9K9K9K9K9K9K9K9K9K9K9K9K9K9K9', NOW(), NOW())

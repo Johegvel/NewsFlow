@@ -66,6 +66,16 @@ F. Módulo de Marcadores y Guardados:
    • DELETE /api/v1/saved_posts/:id
      - Lógica: Remueve el artículo de la lista de marcadores personales.
 
+H. Módulo de Perfil, Lecturas y Preferencias:
+   • POST /api/v1/posts/:post_id/post_reads
+     - Lógica: Registra una lectura única por usuario y publicación, respetando la preferencia de historial.
+   • GET /api/v1/me/profile
+     - Lógica: Retorna contadores persistentes de noticias leídas, críticas publicadas y publicaciones guardadas.
+   • DELETE /api/v1/me/read_history
+     - Lógica: Permite al usuario borrar únicamente su historial y reiniciar el contador de lecturas.
+   • GET/PATCH /api/v1/me/preferences
+     - Lógica: Consulta y actualiza privacidad, personalización, síntesis matutina y alertas de curación.
+
 G. Módulo de Moderación Comunitaria:
    • POST /api/v1/posts/:post_id/reports
      - Lógica: Permite a los usuarios reportar contenido inexacto, spam o inapropiado adjuntando un motivo.
@@ -93,14 +103,13 @@ Para cumplir con el propósito de Flews ("Menos ruido, mayor calidad informativa
 A. Hacker News API (Algolia):
    - Endpoint: https://hn.algolia.com/api/v1/search
    - Cobertura: Tecnología, Inteligencia Artificial, Ciberseguridad y Startups.
-   - Criterio de Selección: Filtro estricto por umbral numérico (points >= 70 y num_comments >= 15).
-B. Reddit Public JSON Endpoints:
-   - Endpoints: https://www.reddit.com/r/{subreddit}/top.json?t=day
-   - Comunidades: r/technology, r/science, r/artificial, r/netsec, r/health, r/medicine, r/foodscience, r/AskCulinary, r/sports.
-   - Criterio de Selección: Puntuación de aprobación comunitaria (score >= 50 a 150 según la rama) descartando publicaciones marcadas como NSFW o contenido exclusivamente de video.
-C. Feeds RSS / Atom de Medios de Referencia:
-   - Cobertura: TechCrunch, Phys.org (Ciencia), Medical News Today (Salud), Eater (Gastronomía), BBC Sport (Deportes), The Hacker News (Ciberseguridad).
+   - Criterio de Selección: Filtro estricto por umbral numérico, comentarios y antigüedad máxima de siete días.
+B. Feeds RSS / Atom de Medios de Referencia:
+   - Cobertura: TechCrunch, TechCrunch Startups, Phys.org (Ciencia), NIEHS (Salud), Eater (Gastronomía), BBC Sport (Deportes), The Hacker News (Ciberseguridad).
    - Extracción de metadatos: Titular, resumen, fecha de publicación y enlace canónico original.
+C. Reddit:
+   - El adaptador permanece disponible para una futura integración autenticada mediante OAuth.
+   - Los endpoints JSON anónimos se encuentran desactivados porque responden HTTP 403 de forma consistente desde la infraestructura de ejecución.
 
 2.3. Uso Eficiente de Librerías y Arquitectura Modular (Source Adapters)
 - Cliente HTTP Robusto: Implementado en app/services/news_ingestion/sources/base_source.rb utilizando la librería estándar Net::HTTP y URI de Ruby, evitando dependencias pesadas innecesarias.
@@ -113,6 +122,7 @@ C. Feeds RSS / Atom de Medios de Referencia:
 2.4. Curaduría Heurística y Buenas Prácticas de Extracción:
 - Limpieza y Sanitización de Contenido: Eliminación de etiquetas HTML residuales, normalización de espacios en blanco y truncado inteligente a longitudes óptimas para lectura.
 - Filtro Anti-Clickbait: Expresiones regulares en app/services/news_ingestion/curators/heuristic_curator.rb que descartan titulares sensacionalistas.
+- Control de Volumen: Máximo de 4 noticias nuevas por fuente y 12 por comunidad en cada ejecución.
 - Deduplicación Transaccional: Verificación previa en base de datos mediante coincidencia de titulares y enlaces canónicos para evitar la inserción de noticias duplicadas.
 - Enriquecimiento Editorial: Cada noticia procesada incorpora una insignia de procedencia y puntos de relevancia de comunidad (ej. "📊 Relevancia: 340 puntos de comunidad (Hacker News)").
 - Atribución y Transparencia: Persistencia asociada al usuario de sistema "Flews Curador" (bot@flews.app) con enlaces directos a las fuentes originales.
@@ -120,6 +130,12 @@ C. Feeds RSS / Atom de Medios de Referencia:
 2.5. Automatización y Tareas Programadas:
 - Tarea Rake Ejecutable: lib/tasks/news_ingestion.rake (ejecutable bajo demanda mediante bin/rails news:fetch_trending).
 - Background Worker: app/jobs/fetch_trending_news_job.rb listo para ejecución desatendida y periódica en segundo plano mediante Solid Queue / Cron.
+
+2.6. Datos de Demostración:
+- En desarrollo y pruebas, bin/rails db:seed carga 2 usuarios demo, 7 noticias, 3 críticas e interacciones de ejemplo.
+- Credenciales locales: demo1@flews.app o demo2@flews.app, contraseña FlewsDemo2026!.
+- En producción solo se cargan comunidades, intereses y el usuario curador. Los datos demo requieren habilitación explícita con LOAD_DEMO_DATA=true.
+- Las semillas son idempotentes: ejecutarlas nuevamente actualiza los registros definidos sin crear duplicados.
 
 ================================================================================
 FIN DEL INFORME TÉCNICO - FLEWS BACKEND & INGESTION ENGINE

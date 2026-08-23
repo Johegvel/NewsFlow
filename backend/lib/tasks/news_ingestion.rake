@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 namespace :news do
-  desc 'Extrae noticias virales y de alta relevancia desde Hacker News, Reddit y RSS sin costo'
+  desc 'Extrae noticias recientes y de alta relevancia desde Hacker News y fuentes RSS'
   task fetch_trending: :environment do
     puts '=================================================='
     puts '🚀 Flews: Iniciando Ingesta de Noticias Curadas...'

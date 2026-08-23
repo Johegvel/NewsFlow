@@ -16,14 +16,17 @@ class AuthScreen extends StatefulWidget {
 
 class _AuthScreenState extends State<AuthScreen>
     with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+  static const bool _demoLoginEnabled = bool.fromEnvironment(
+    'ENABLE_DEMO_LOGIN',
+    defaultValue: false,
+  );
 
-  final TextEditingController _loginEmailController = TextEditingController();
-  final TextEditingController _loginPasswordController = TextEditingController();
-
-  final TextEditingController _registerNameController = TextEditingController();
-  final TextEditingController _registerEmailController = TextEditingController();
-  final TextEditingController _registerPasswordController = TextEditingController();
+  late final TabController _tabController;
+  final _loginEmailController = TextEditingController();
+  final _loginPasswordController = TextEditingController();
+  final _registerNameController = TextEditingController();
+  final _registerEmailController = TextEditingController();
+  final _registerPasswordController = TextEditingController();
 
   bool _obscureLoginPassword = true;
   bool _obscureRegisterPassword = true;
@@ -32,7 +35,10 @@ class _AuthScreenState extends State<AuthScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 2, vsync: this)
+      ..addListener(() {
+        if (!_tabController.indexIsChanging && mounted) setState(() {});
+      });
   }
 
   @override
@@ -46,52 +52,43 @@ class _AuthScreenState extends State<AuthScreen>
     super.dispose();
   }
 
-  void _onAuthSuccess(UserEntity user, String welcomeMessage) {
+  void _fillDemo(String email) {
+    setState(() {
+      _loginEmailController.text = email;
+      _loginPasswordController.text = 'FlewsDemo2026!';
+    });
+  }
+
+  void _onAuthSuccess(UserEntity user, String message) {
     if (!mounted) return;
     FlewsNotificationHelper.show(
       context: context,
       title: '¡Bienvenido a Flews!',
-      message: welcomeMessage,
+      message: message,
       actionIcon: Icons.check_circle_rounded,
     );
-
     Navigator.of(context).pushReplacement(
-      PageRouteBuilder(
-        transitionDuration: const Duration(milliseconds: 500),
-        pageBuilder: (context, animation, secondaryAnimation) =>
-            const HomePage(),
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          return FadeTransition(opacity: animation, child: child);
-        },
-      ),
+      MaterialPageRoute<void>(builder: (_) => const HomePage()),
     );
   }
 
   Future<void> _handleLogin() async {
     final email = _loginEmailController.text.trim();
     final password = _loginPasswordController.text;
-
     if (email.isEmpty || password.isEmpty) {
-      FlewsNotificationHelper.show(
-        context: context,
-        title: 'Campos requeridos',
-        message: 'Por favor ingresa tu correo y contraseña.',
-        actionIcon: Icons.warning_amber_rounded,
-      );
+      _showRequired('Ingresa tu correo y contraseña.');
       return;
     }
-
     setState(() => _loading = true);
-
     try {
       final user = await ServiceLocator.authRepository.login(email, password);
-      _onAuthSuccess(user, 'Sesión iniciada como ${user.name}');
-    } catch (e) {
+      _onAuthSuccess(user, 'Sesión iniciada como ${user.name}.');
+    } catch (error) {
       if (mounted) {
         FlewsNotificationHelper.show(
           context: context,
-          title: 'Error de inicio de sesión',
-          message: e.toString().replaceAll('Exception: ', ''),
+          title: 'No pudimos iniciar sesión',
+          message: '$error'.replaceAll('Exception: ', ''),
         );
       }
     } finally {
@@ -103,38 +100,28 @@ class _AuthScreenState extends State<AuthScreen>
     final name = _registerNameController.text.trim();
     final email = _registerEmailController.text.trim();
     final password = _registerPasswordController.text;
-
     if (name.isEmpty || email.isEmpty || password.isEmpty) {
-      FlewsNotificationHelper.show(
-        context: context,
-        title: 'Campos requeridos',
-        message: 'Por favor completa todos los campos (nombre, correo y contraseña).',
-        actionIcon: Icons.warning_amber_rounded,
-      );
+      _showRequired('Completa nombre, correo y contraseña.');
       return;
     }
-
     if (password.length < 6) {
-      FlewsNotificationHelper.show(
-        context: context,
-        title: 'Contraseña muy corta',
-        message: 'La contraseña debe tener al menos 6 caracteres.',
-        actionIcon: Icons.warning_amber_rounded,
-      );
+      _showRequired('La contraseña debe tener al menos 6 caracteres.');
       return;
     }
-
     setState(() => _loading = true);
-
     try {
-      final user = await ServiceLocator.authRepository.register(name, email, password);
-      _onAuthSuccess(user, 'Tu cuenta ${user.name} ha sido creada con éxito.');
-    } catch (e) {
+      final user = await ServiceLocator.authRepository.register(
+        name,
+        email,
+        password,
+      );
+      _onAuthSuccess(user, 'Tu cuenta fue creada correctamente.');
+    } catch (error) {
       if (mounted) {
         FlewsNotificationHelper.show(
           context: context,
-          title: 'Error al registrarte',
-          message: e.toString().replaceAll('Exception: ', ''),
+          title: 'No pudimos crear tu cuenta',
+          message: '$error'.replaceAll('Exception: ', ''),
         );
       }
     } finally {
@@ -142,393 +129,273 @@ class _AuthScreenState extends State<AuthScreen>
     }
   }
 
+  void _showRequired(String message) {
+    FlewsNotificationHelper.show(
+      context: context,
+      title: 'Revisa los datos',
+      message: message,
+      actionIcon: Icons.warning_amber_rounded,
+    );
+  }
+
+  Widget _field({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required IconData icon,
+    bool obscure = false,
+    VoidCallback? toggleObscure,
+    TextInputType? keyboardType,
+    TextInputAction? textInputAction,
+    ValueChanged<String>? onSubmitted,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label.toUpperCase(),
+          style: const TextStyle(
+            color: AppTheme.textSecondary,
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 1,
+          ),
+        ),
+        const SizedBox(height: 7),
+        TextField(
+          controller: controller,
+          obscureText: obscure,
+          keyboardType: keyboardType,
+          textInputAction: textInputAction,
+          onSubmitted: onSubmitted,
+          decoration: InputDecoration(
+            hintText: hint,
+            prefixIcon: Icon(icon, color: AppTheme.textSecondary, size: 20),
+            suffixIcon: toggleObscure == null
+                ? null
+                : IconButton(
+                    onPressed: toggleObscure,
+                    icon: Icon(
+                      obscure
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
+                      color: AppTheme.textSecondary,
+                      size: 20,
+                    ),
+                  ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _loginForm() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _field(
+          controller: _loginEmailController,
+          label: 'Correo electrónico',
+          hint: 'tu@correo.com',
+          icon: Icons.mail_outline_rounded,
+          keyboardType: TextInputType.emailAddress,
+          textInputAction: TextInputAction.next,
+        ),
+        const SizedBox(height: 16),
+        _field(
+          controller: _loginPasswordController,
+          label: 'Contraseña',
+          hint: 'Ingresa tu contraseña',
+          icon: Icons.lock_outline_rounded,
+          obscure: _obscureLoginPassword,
+          toggleObscure: () =>
+              setState(() => _obscureLoginPassword = !_obscureLoginPassword),
+          textInputAction: TextInputAction.done,
+          onSubmitted: (_) => _handleLogin(),
+        ),
+        const SizedBox(height: 22),
+        FilledButton(
+          key: const ValueKey('login-button'),
+          onPressed: _loading ? null : _handleLogin,
+          child: _loading
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    color: AppTheme.darkBackground,
+                    strokeWidth: 2,
+                  ),
+                )
+              : const Text('Iniciar Sesión'),
+        ),
+      ],
+    );
+  }
+
+  Widget _registerForm() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _field(
+          controller: _registerNameController,
+          label: 'Nombre completo',
+          hint: 'Cómo quieres aparecer',
+          icon: Icons.person_outline_rounded,
+          textInputAction: TextInputAction.next,
+        ),
+        const SizedBox(height: 13),
+        _field(
+          controller: _registerEmailController,
+          label: 'Correo electrónico',
+          hint: 'tu@correo.com',
+          icon: Icons.mail_outline_rounded,
+          keyboardType: TextInputType.emailAddress,
+          textInputAction: TextInputAction.next,
+        ),
+        const SizedBox(height: 13),
+        _field(
+          controller: _registerPasswordController,
+          label: 'Contraseña',
+          hint: 'Mínimo 6 caracteres',
+          icon: Icons.lock_outline_rounded,
+          obscure: _obscureRegisterPassword,
+          toggleObscure: () => setState(
+            () => _obscureRegisterPassword = !_obscureRegisterPassword,
+          ),
+          textInputAction: TextInputAction.done,
+          onSubmitted: (_) => _handleRegister(),
+        ),
+        const SizedBox(height: 20),
+        FilledButton(
+          key: const ValueKey('register-button'),
+          onPressed: _loading ? null : _handleRegister,
+          child: _loading
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    color: AppTheme.darkBackground,
+                    strokeWidth: 2,
+                  ),
+                )
+              : const Text('Crear Cuenta'),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final registering = _tabController.index == 1;
     return Scaffold(
-      backgroundColor: AppTheme.darkBackground,
       body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-            child: ResponsiveContainer(
-              maxWidth: 480,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Logo Emblem sin brillos ni bordes contrastados
-                  Center(
-                    child: SizedBox(
-                      width: 90,
-                      height: 90,
-                      child: Image.asset(
-                        'assets/images/flews_logo.png',
-                        width: 90,
-                        height: 90,
-                        fit: BoxFit.contain,
-                        errorBuilder: (context, error, stackTrace) =>
-                            const Icon(
-                          Icons.newspaper_rounded,
-                          size: 60,
-                          color: AppTheme.amberAccent,
-                        ),
-                      ),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 22, 20, 28),
+          child: ResponsiveContainer(
+            maxWidth: 430,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Center(
+                  child: Image.asset(
+                    'assets/images/flews_logo.png',
+                    width: 140,
+                    height: 105,
+                    fit: BoxFit.contain,
+                    errorBuilder: (_, _, _) => const Icon(
+                      Icons.newspaper_rounded,
+                      size: 72,
+                      color: AppTheme.amberAccent,
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  // Wordmark
-                  Center(
-                    child: RichText(
-                      text: const TextSpan(
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 1.2,
-                          color: Colors.white,
-                        ),
-                        children: [
-                          TextSpan(text: 'Flew'),
-                          TextSpan(
-                            text: 's',
-                            style: TextStyle(
-                              color: AppTheme.amberAccent,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  registering ? 'Únete a la comunidad' : 'Bienvenido de nuevo',
+                  textAlign: TextAlign.center,
+                  style: AppTheme.editorial(fontSize: 30),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  registering
+                      ? 'Crea tu perfil para guardar noticias y publicar análisis.'
+                      : 'Tu síntesis diaria y la Tribuna te esperan.',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: AppTheme.textSecondary,
+                    fontSize: 13,
                   ),
-                  const SizedBox(height: 4),
-                  const Center(
-                    child: Text(
-                      'Menos noticias irrelevantes • Mayor calidad',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: AppTheme.textSecondary,
-                      ),
-                    ),
+                ),
+                const SizedBox(height: 24),
+                TabBar(
+                  controller: _tabController,
+                  indicatorColor: AppTheme.amberAccent,
+                  indicatorWeight: 2,
+                  dividerColor: AppTheme.borderColor,
+                  labelColor: AppTheme.amberAccent,
+                  unselectedLabelColor: AppTheme.textSecondary,
+                  labelStyle: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
                   ),
-                  const SizedBox(height: 28),
-
-                  // Auth Card Container
-                  Container(
-                    decoration: BoxDecoration(
-                      color: AppTheme.surfaceColor,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: AppTheme.borderColor,
-                        width: 1,
+                  tabs: const [
+                    Tab(text: 'Iniciar Sesión'),
+                    Tab(text: 'Crear Cuenta'),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                Container(
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    color: AppTheme.surfaceColor,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppTheme.borderColor, width: 1.5),
+                  ),
+                  child: AnimatedSize(
+                    duration: const Duration(milliseconds: 220),
+                    child: registering ? _registerForm() : _loginForm(),
+                  ),
+                ),
+                if (!registering && _demoLoginEnabled) ...[
+                  const SizedBox(height: 18),
+                  const Row(
+                    children: [
+                      Expanded(child: Divider()),
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 12),
+                        child: Text(
+                          'ACCESO DE PRUEBA',
+                          style: TextStyle(
+                            color: AppTheme.textMuted,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 1,
+                          ),
+                        ),
                       ),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Colors.black45,
-                          blurRadius: 20,
-                          offset: Offset(0, 8),
+                      Expanded(child: Divider()),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => _fillDemo('demo1@flews.app'),
+                          child: const Text('Demo 1'),
                         ),
-                      ],
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // Tabs Header
-                        Container(
-                          margin: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: AppTheme.darkBackground,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: TabBar(
-                            controller: _tabController,
-                            indicatorSize: TabBarIndicatorSize.tab,
-                            dividerColor: Colors.transparent,
-                            indicator: BoxDecoration(
-                              color: AppTheme.amberAccent,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            labelColor: Colors.black,
-                            unselectedLabelColor: AppTheme.textSecondary,
-                            labelStyle: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                            ),
-                            tabs: const [
-                              Tab(text: 'Iniciar Sesión'),
-                              Tab(text: 'Registrarse'),
-                            ],
-                          ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => _fillDemo('demo2@flews.app'),
+                          child: const Text('Demo 2'),
                         ),
-
-                        // Form Content
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-                          child: SizedBox(
-                            height: 310,
-                            child: TabBarView(
-                              controller: _tabController,
-                              children: [
-                                // Tab 1: Login Form
-                                Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.stretch,
-                                  children: [
-                                    TextField(
-                                      controller: _loginEmailController,
-                                      keyboardType: TextInputType.emailAddress,
-                                      style:
-                                          const TextStyle(color: Colors.white),
-                                      decoration: InputDecoration(
-                                        labelText: 'Correo Electrónico',
-                                        hintText: 'ej. usuario@flews.app',
-                                        prefixIcon: const Icon(
-                                          Icons.email_outlined,
-                                          color: AppTheme.amberAccent,
-                                        ),
-                                        filled: true,
-                                        fillColor: AppTheme.darkBackground,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 12),
-                                    TextField(
-                                      controller: _loginPasswordController,
-                                      obscureText: _obscureLoginPassword,
-                                      style:
-                                          const TextStyle(color: Colors.white),
-                                      decoration: InputDecoration(
-                                        labelText: 'Contraseña',
-                                        prefixIcon: const Icon(
-                                          Icons.lock_outline_rounded,
-                                          color: AppTheme.amberAccent,
-                                        ),
-                                        suffixIcon: IconButton(
-                                          icon: Icon(
-                                            _obscureLoginPassword
-                                                ? Icons.visibility_outlined
-                                                : Icons.visibility_off_outlined,
-                                            color: AppTheme.textSecondary,
-                                          ),
-                                          onPressed: () {
-                                            setState(() {
-                                              _obscureLoginPassword =
-                                                  !_obscureLoginPassword;
-                                            });
-                                          },
-                                        ),
-                                        filled: true,
-                                        fillColor: AppTheme.darkBackground,
-                                      ),
-                                      onSubmitted: (_) => _handleLogin(),
-                                    ),
-                                    const SizedBox(height: 18),
-                                    FilledButton(
-                                      onPressed:
-                                          _loading ? null : () => _handleLogin(),
-                                      style: FilledButton.styleFrom(
-                                        backgroundColor: AppTheme.amberAccent,
-                                        foregroundColor: Colors.black,
-                                        padding: const EdgeInsets.symmetric(
-                                            vertical: 14),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(12),
-                                        ),
-                                      ),
-                                      child: _loading
-                                          ? const SizedBox(
-                                              width: 20,
-                                              height: 20,
-                                              child: CircularProgressIndicator(
-                                                strokeWidth: 2,
-                                                color: Colors.black,
-                                              ),
-                                            )
-                                          : const Text(
-                                              'Entrar a Flews',
-                                              style: TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 15,
-                                              ),
-                                            ),
-                                    ),
-                                    const SizedBox(height: 12),
-                                    // Redirección a Registro
-                                    Center(
-                                      child: TextButton(
-                                        onPressed: () {
-                                          _tabController.animateTo(1);
-                                        },
-                                        style: TextButton.styleFrom(
-                                          foregroundColor: AppTheme.textSecondary,
-                                          padding: const EdgeInsets.symmetric(
-                                              vertical: 4, horizontal: 8),
-                                        ),
-                                        child: RichText(
-                                          text: const TextSpan(
-                                            style: TextStyle(
-                                              fontSize: 13,
-                                              color: AppTheme.textSecondary,
-                                            ),
-                                            children: [
-                                              TextSpan(
-                                                  text: '¿No tienes cuenta? '),
-                                              TextSpan(
-                                                text: 'Regístrate aquí',
-                                                style: TextStyle(
-                                                  color: AppTheme.amberAccent,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-
-                                // Tab 2: Register Form
-                                Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.stretch,
-                                  children: [
-                                    TextField(
-                                      controller: _registerNameController,
-                                      style:
-                                          const TextStyle(color: Colors.white),
-                                      decoration: InputDecoration(
-                                        labelText: 'Nombre Completo',
-                                        prefixIcon: const Icon(
-                                          Icons.person_outline,
-                                          color: AppTheme.amberAccent,
-                                        ),
-                                        filled: true,
-                                        fillColor: AppTheme.darkBackground,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 10),
-                                    TextField(
-                                      controller: _registerEmailController,
-                                      keyboardType: TextInputType.emailAddress,
-                                      style:
-                                          const TextStyle(color: Colors.white),
-                                      decoration: InputDecoration(
-                                        labelText: 'Correo Electrónico',
-                                        prefixIcon: const Icon(
-                                          Icons.email_outlined,
-                                          color: AppTheme.amberAccent,
-                                        ),
-                                        filled: true,
-                                        fillColor: AppTheme.darkBackground,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 10),
-                                    TextField(
-                                      controller: _registerPasswordController,
-                                      obscureText: _obscureRegisterPassword,
-                                      style:
-                                          const TextStyle(color: Colors.white),
-                                      decoration: InputDecoration(
-                                        labelText: 'Contraseña (mínimo 6 caracteres)',
-                                        prefixIcon: const Icon(
-                                          Icons.lock_outline_rounded,
-                                          color: AppTheme.amberAccent,
-                                        ),
-                                        suffixIcon: IconButton(
-                                          icon: Icon(
-                                            _obscureRegisterPassword
-                                                ? Icons.visibility_outlined
-                                                : Icons.visibility_off_outlined,
-                                            color: AppTheme.textSecondary,
-                                          ),
-                                          onPressed: () {
-                                            setState(() {
-                                              _obscureRegisterPassword =
-                                                  !_obscureRegisterPassword;
-                                            });
-                                          },
-                                        ),
-                                        filled: true,
-                                        fillColor: AppTheme.darkBackground,
-                                      ),
-                                      onSubmitted: (_) => _handleRegister(),
-                                    ),
-                                    const SizedBox(height: 14),
-                                    FilledButton(
-                                      onPressed:
-                                          _loading ? null : _handleRegister,
-                                      style: FilledButton.styleFrom(
-                                        backgroundColor: AppTheme.amberAccent,
-                                        foregroundColor: Colors.black,
-                                        padding: const EdgeInsets.symmetric(
-                                            vertical: 14),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(12),
-                                        ),
-                                      ),
-                                      child: _loading
-                                          ? const SizedBox(
-                                              width: 20,
-                                              height: 20,
-                                              child: CircularProgressIndicator(
-                                                strokeWidth: 2,
-                                                color: Colors.black,
-                                              ),
-                                            )
-                                          : const Text(
-                                              'Crear Cuenta',
-                                              style: TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 15,
-                                              ),
-                                            ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    // Redirección a Login
-                                    Center(
-                                      child: TextButton(
-                                        onPressed: () {
-                                          _tabController.animateTo(0);
-                                        },
-                                        style: TextButton.styleFrom(
-                                          foregroundColor: AppTheme.textSecondary,
-                                          padding: const EdgeInsets.symmetric(
-                                              vertical: 4, horizontal: 8),
-                                        ),
-                                        child: RichText(
-                                          text: const TextSpan(
-                                            style: TextStyle(
-                                              fontSize: 13,
-                                              color: AppTheme.textSecondary,
-                                            ),
-                                            children: [
-                                              TextSpan(
-                                                  text: '¿Ya tienes una cuenta? '),
-                                              TextSpan(
-                                                text: 'Inicia sesión',
-                                                style: TextStyle(
-                                                  color: AppTheme.amberAccent,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ],
-              ),
+              ],
             ),
           ),
         ),

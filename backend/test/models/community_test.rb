@@ -4,7 +4,7 @@ class CommunityTest < ActiveSupport::TestCase
   test "comunidad válida" do
     community = Community.new(
       name: "Tecnología",
-      slug: "tecnologia",
+      slug: "tecnologia-#{SecureRandom.hex(4)}",
       topic: "Tecnología"
     )
 

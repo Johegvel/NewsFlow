@@ -33,10 +33,16 @@ Esta guía detalla los pasos y comandos exactos para desplegar el backend de **F
 3. Una vez creado el proyecto, ve a:
    * **Project Settings** (icono de engranaje) ➔ **Database**.
    * Baja hasta la sección **"Connection string"** ➔ Pestaña **"URI"** o **"Connection Pooler"**.
-4. Copia tu cadena de conexión `DATABASE_URL`. Tendrá un formato como este:
+4. Copia dos cadenas de conexión:
+   * `DATABASE_URL`: conexión Pooler/Transaction en puerto `6543`, usada por el servicio Rails.
+   * `MIGRATION_DATABASE_URL`: conexión directa o Session Pooler en puerto `5432`, usada únicamente por el Job de migraciones.
+
+   Tendrán un formato como este:
    ```text
    postgresql://postgres.[PROJECT_REF]:[TU_CONTRASEÑA]@aws-0-[REGION].pooler.supabase.com:5432/postgres?sslmode=require
    ```
+
+> Si una credencial de Supabase fue incluida alguna vez en un archivo versionado, cambia la contraseña de la base antes de desplegar y actualiza ambos secretos.
 
 ---
 
@@ -54,33 +60,30 @@ python -c "import secrets; print(secrets.token_hex(64))"
 
 ## ☁️ PASO 3: Desplegar en Google Cloud Run
 
-Tienes **dos métodos sencillos** para desplegar:
+Tienes **dos métodos** para desplegar:
 
-### 🌟 Opción A: Despliegue Automático desde la Consola de Google Cloud (Recomendada)
+### 🌟 Opción A: GitHub Actions con migración controlada (Recomendada)
 
-1. Ingresa a [Google Cloud Console - Cloud Run](https://console.cloud.google.com/run).
-2. Haz clic en **"Crear Servicio" (Create Service)**:
-   * **Nombre del servicio:** `flews-backend`
-   * **Región:** Selecciona la misma región de tu Supabase (ej. `us-central1` o `us-east1`).
-   * **Implementación:** Marca *"Implementar continuamente nuevas revisiones desde un repositorio de código fuente"* ➔ Haz clic en **"Configurar Cloud Build"**.
-   * Selecciona tu repositorio de GitHub `NewsFlow` y rama `main`.
-   * **Tipo de compilación:** Selecciona **Dockerfile** (Ruta del Dockerfile: `/backend/Dockerfile`).
-   * **Autenticación:** Marca **"Permitir invocaciones no autenticadas"** (para que la app móvil y web puedan consultar las APIs públicas).
-3. En la sección inferior **"Variables de entorno y secretos" (Environment Variables)**, añade las siguientes:
+Configura estos secretos en **GitHub → Settings → Secrets and variables → Actions**:
 
-| Variable | Valor |
+| Secreto | Uso |
 | :--- | :--- |
-| `RAILS_ENV` | `production` |
-| `DATABASE_URL` | `postgresql://postgres.[PROJECT_REF]:[PASSWORD]@aws-0-[REGION].pooler.supabase.com:5432/postgres?sslmode=require` |
-| `SECRET_KEY_BASE` | `[Tu clave de 128 caracteres generada en el Paso 2]` |
-| `RAILS_SERVE_STATIC_FILES` | `true` |
-| `RAILS_LOG_TO_STDOUT` | `true` |
+| `GCP_PROJECT_ID` | ID del proyecto de Google Cloud. |
+| `GCP_REGION` | Región de Cloud Run, por ejemplo `us-central1`. Es opcional; el fallback no sensible es `us-central1`. |
+| `GCP_SA_KEY` | JSON de la cuenta de servicio utilizada por GitHub Actions. |
+| `SECRET_KEY_BASE` | Clave Rails de 128 caracteres. |
+| `DATABASE_URL` | URL Pooler de ejecución, normalmente puerto `6543`. |
+| `MIGRATION_DATABASE_URL` | URL directa/Session Pooler, puerto `5432`. |
 
-4. Haz clic en **"Crear" (Create)**.
-5. Cloud Build compilará el Dockerfile, creará las tablas automáticamente mediante `bin/rails db:prepare` (configurado en `docker-entrypoint`) y te otorgará una **URL pública HTTPS**, por ejemplo:
-   ```text
-   https://flews-backend-xxxxxx-uc.a.run.app
-   ```
+El workflow [`.github/workflows/deploy_backend.yml`](../.github/workflows/deploy_backend.yml) se activa con cambios en `backend/**` sobre `main` o manualmente mediante `workflow_dispatch`. El orden es:
+
+1. Levantar PostgreSQL 16 y ejecutar toda la suite Rails.
+2. Construir y publicar la imagen únicamente si las pruebas pasan.
+3. Actualizar y ejecutar el Job `flews-backend-migrate` con `bin/rails db:migrate`.
+4. Desplegar la nueva revisión del servicio solo si la migración termina correctamente.
+5. Consultar `/up`; cualquier respuesta no exitosa marca el workflow como fallido.
+
+Las migraciones no se ejecutan desde `docker-entrypoint`, evitando carreras cuando Cloud Run inicia varias instancias.
 
 ---
 
@@ -110,21 +113,13 @@ gcloud run deploy flews-backend \
 
 ## 📱 PASO 4: Conectar la App Flutter a Cloud Run
 
-Una vez obtengas tu URL pública de Cloud Run (ej. `https://flews-backend-xxxxxx-uc.a.run.app`), conéctala en la aplicación móvil editando el archivo de constantes:
+Una vez obtengas tu URL pública de Cloud Run, compila Flutter con `API_URL`. No reemplaces el fallback seguro del archivo de constantes:
 
 📁 [`frontend/lib/core/constants/api_constants.dart`](file:///c:/Users/xhcg2/OneDrive/Escritorio/X/Proyectos_personales/NewsFlow/frontend/lib/core/constants/api_constants.dart):
 
-```dart
-class ApiConstants {
-  // Producción en Google Cloud Run:
-  static const String baseUrl = 'https://flews-backend-xxxxxx-uc.a.run.app/api/v1';
-
-  // Endpoints:
-  static const String posts = '$baseUrl/posts';
-  static const String communities = '$baseUrl/communities';
-  static const String auth = '$baseUrl/auth';
-  static const String reports = '$baseUrl/reports';
-}
+```bash
+flutter build web \
+  --dart-define=API_URL=https://flews-backend-xxxxxx-uc.a.run.app/api/v1
 ```
 
 ---

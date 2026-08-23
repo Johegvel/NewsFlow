@@ -1,21 +1,24 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_theme.dart';
-import '../../../core/widgets/flews_app_bar_title.dart';
-import '../../../core/widgets/flews_notification.dart';
+import '../../../core/utils/post_formatters.dart';
+import '../../../core/widgets/flews_bottom_navigation.dart';
+import '../../../core/widgets/flews_empty_state.dart';
+import '../../../core/widgets/flews_section_switcher.dart';
 import '../../../core/widgets/responsive_container.dart';
 import '../../../domain/entities/community_entity.dart';
 import '../../../domain/entities/post_entity.dart';
 import '../../../service_locator.dart';
 import '../../widgets/critique_card.dart';
 import '../../widgets/post_card.dart';
-import '../auth/auth_screen.dart';
-import '../moderation/moderation_page.dart';
 import '../post_detail/post_detail_page.dart';
+import '../profile/profile_page.dart';
 import '../saved_posts/saved_posts_page.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  final int initialTab;
+
+  const HomePage({super.key, this.initialTab = 0});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -23,8 +26,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage>
     with SingleTickerProviderStateMixin {
-  late TabController _tabController;
-
+  late final TabController _tabController;
   late Future<List<PostEntity>> newsFuture;
   late Future<List<PostEntity>> critiquesFuture;
   late Future<List<CommunityEntity>> communitiesFuture;
@@ -35,28 +37,36 @@ class _HomePageState extends State<HomePage>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
-    _tabController.addListener(() {
-      if (mounted) setState(() {});
-    });
+    _tabController =
+        TabController(
+          length: 2,
+          initialIndex: widget.initialTab <= 0 ? 0 : 1,
+          vsync: this,
+        )..addListener(() {
+          if (!_tabController.indexIsChanging && mounted) {
+            setState(() {
+              searchText = '';
+              selectedCommunityId = null;
+            });
+          }
+        });
     loadData();
   }
 
   void loadData() {
     newsFuture = ServiceLocator.postRepository.fetchPosts(filter: 'news');
-    critiquesFuture = ServiceLocator.postRepository.fetchPosts(filter: 'critiques');
+    critiquesFuture = ServiceLocator.postRepository.fetchPosts(
+      filter: 'critiques',
+    );
     communitiesFuture = ServiceLocator.communityRepository.fetchCommunities();
   }
 
   Future<void> refreshData() async {
-    setState(() {
-      loadData();
-    });
-
-    await Future.wait([
-      newsFuture,
-      critiquesFuture,
-      communitiesFuture,
+    setState(loadData);
+    await Future.wait<void>([
+      newsFuture.then<void>((_) {}),
+      critiquesFuture.then<void>((_) {}),
+      communitiesFuture.then<void>((_) {}),
     ]);
   }
 
@@ -67,374 +77,301 @@ class _HomePageState extends State<HomePage>
   }
 
   List<PostEntity> filterItems(List<PostEntity> items) {
+    final query = searchText.trim().toLowerCase();
     return items.where((item) {
       final matchesSearch =
-          item.title.toLowerCase().contains(searchText.toLowerCase()) ||
-          item.content.toLowerCase().contains(searchText.toLowerCase());
-
-      final matchesCommunity = selectedCommunityId == null ||
+          query.isEmpty ||
+          item.title.toLowerCase().contains(query) ||
+          item.content.toLowerCase().contains(query);
+      final matchesCommunity =
+          selectedCommunityId == null ||
           item.communityId == selectedCommunityId;
-
       return matchesSearch && matchesCommunity;
     }).toList();
   }
 
-  Future<void> _logout() async {
-    await ServiceLocator.authRepository.logout();
-    if (!mounted) return;
-    FlewsNotificationHelper.show(
-      context: context,
-      title: 'Sesión finalizada',
-      message: 'Has cerrado sesión correctamente.',
-    );
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => const AuthScreen()),
-    );
+  void _selectSection(int index) {
+    if (_tabController.index == index) return;
+    _tabController.animateTo(index);
+  }
+
+  Future<void> _onBottomSelected(int index) async {
+    if (index < 2) {
+      _selectSection(index);
+      return;
+    }
+    if (index == 2) {
+      await Navigator.of(context).push<void>(
+        MaterialPageRoute<void>(builder: (_) => const SavedPostsPage()),
+      );
+    } else {
+      await Navigator.of(context).push<void>(
+        MaterialPageRoute<void>(builder: (_) => const ProfilePage()),
+      );
+    }
+    if (mounted) refreshData();
   }
 
   @override
   Widget build(BuildContext context) {
     final currentUser = ServiceLocator.authRepository.currentUser;
+    final currentTab = _tabController.index;
 
     return Scaffold(
       appBar: AppBar(
-        title: const FlewsAppBarTitle(showTagline: true),
-        centerTitle: false,
+        toolbarHeight: 62,
+        titleSpacing: 16,
+        title: Image.asset(
+          'assets/images/flews_logo.png',
+          width: 62,
+          height: 48,
+          fit: BoxFit.contain,
+          errorBuilder: (_, _, _) =>
+              const Icon(Icons.newspaper_rounded, color: AppTheme.amberAccent),
+        ),
         actions: [
           IconButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const SavedPostsPage(),
-                ),
-              );
-            },
-            icon: const Icon(Icons.bookmark_outline_rounded),
+            onPressed: () => _onBottomSelected(2),
+            icon: const Icon(Icons.bookmark_border_rounded),
             tooltip: 'Publicaciones guardadas',
           ),
-          IconButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const ModerationPage(),
-                ),
-              );
-            },
-            icon: const Icon(Icons.admin_panel_settings_outlined),
-            tooltip: 'Moderación',
-          ),
-          IconButton(
-            onPressed: refreshData,
-            icon: const Icon(Icons.refresh_rounded),
-            tooltip: 'Actualizar',
-          ),
           const SizedBox(width: 4),
-
-          // User Profile Menu
-          PopupMenuButton<String>(
-            tooltip: 'Perfil de usuario',
-            offset: const Offset(0, 48),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14),
-              side: const BorderSide(color: AppTheme.borderColor),
-            ),
-            color: AppTheme.surfaceColor,
-            icon: CircleAvatar(
-              radius: 16,
+          InkWell(
+            onTap: () => _onBottomSelected(3),
+            borderRadius: BorderRadius.circular(99),
+            child: CircleAvatar(
+              radius: 17,
               backgroundColor: AppTheme.amberAccent,
               child: Text(
-                (currentUser?.name.isNotEmpty == true)
-                    ? currentUser!.name.substring(0, 1).toUpperCase()
-                    : 'U',
+                initialsFor(currentUser?.name ?? 'Usuario'),
                 style: const TextStyle(
-                  color: Colors.black,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w900,
+                  color: AppTheme.darkBackground,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
                 ),
               ),
             ),
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                enabled: false,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      currentUser?.name ?? 'Usuario',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                        fontSize: 14,
-                      ),
-                    ),
-                    Text(
-                      currentUser?.email ?? '',
-                      style: const TextStyle(
-                        color: AppTheme.textSecondary,
-                        fontSize: 12,
-                      ),
-                    ),
-                    const Divider(color: AppTheme.borderColor, height: 16),
-                  ],
-                ),
-              ),
-              const PopupMenuItem(
-                value: 'logout',
-                child: Row(
-                  children: [
-                    Icon(Icons.logout_rounded, color: Color(0xFFEF4444), size: 18),
-                    SizedBox(width: 10),
-                    Text(
-                      'Cerrar Sesión',
-                      style: TextStyle(color: Color(0xFFEF4444), fontWeight: FontWeight.w600),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-            onSelected: (value) {
-              if (value == 'logout') {
-                _logout();
-              }
-            },
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 16),
         ],
       ),
-      body: Center(
-        child: ResponsiveContainer(
-          maxWidth: 1100,
-          child: RefreshIndicator(
-            onRefresh: refreshData,
-            color: AppTheme.amberAccent,
-            child: CustomScrollView(
-              slivers: [
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Dual Section Switcher: Noticias Curadas vs Críticas
-                        Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: AppTheme.surfaceColor,
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: AppTheme.borderColor),
-                          ),
-                          child: TabBar(
-                            controller: _tabController,
-                            indicatorSize: TabBarIndicatorSize.tab,
-                            dividerColor: Colors.transparent,
-                            indicator: BoxDecoration(
-                              color: AppTheme.amberAccent,
-                              borderRadius: BorderRadius.circular(10),
+      bottomNavigationBar: FlewsBottomNavigation(
+        selectedIndex: currentTab,
+        onSelected: _onBottomSelected,
+      ),
+      body: ResponsiveContainer(
+        maxWidth: 720,
+        child: RefreshIndicator(
+          onRefresh: refreshData,
+          color: AppTheme.amberAccent,
+          backgroundColor: AppTheme.surfaceColor,
+          child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      FlewsSectionSwitcher(
+                        selectedIndex: currentTab,
+                        onSelected: _selectSection,
+                      ),
+                      const SizedBox(height: 16),
+                      if (currentTab == 0) ...[
+                        TextField(
+                          key: const ValueKey('news-search'),
+                          decoration: const InputDecoration(
+                            hintText:
+                                'Buscar noticias por titular o contexto...',
+                            prefixIcon: Icon(
+                              Icons.search_rounded,
+                              color: AppTheme.textSecondary,
                             ),
-                            labelColor: Colors.black,
-                            unselectedLabelColor: AppTheme.textSecondary,
-                            labelStyle: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 13,
-                            ),
-                            tabs: const [
-                              Tab(
-                                icon: Icon(Icons.newspaper_rounded, size: 18),
-                                text: 'Noticias Curadas',
-                              ),
-                              Tab(
-                                icon: Icon(Icons.rate_review_rounded, size: 18),
-                                text: 'Críticas y Análisis',
-                              ),
-                            ],
                           ),
+                          onChanged: (value) =>
+                              setState(() => searchText = value),
                         ),
                         const SizedBox(height: 14),
-
-                        // Search Input
-                        TextField(
-                          style: const TextStyle(color: Colors.white),
-                          decoration: InputDecoration(
-                            hintText: _tabController.index == 0
-                                ? 'Buscar noticias por titular o contexto...'
-                                : 'Buscar críticas por opinión o temática...',
-                            hintStyle: const TextStyle(color: AppTheme.textMuted, fontSize: 14),
-                            prefixIcon: const Icon(Icons.search, color: AppTheme.amberAccent),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        const Text(
+                          'EXPLORAR POR COMUNIDAD',
+                          style: TextStyle(
+                            color: AppTheme.textSecondary,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 1,
                           ),
-                          onChanged: (value) {
-                            setState(() {
-                              searchText = value;
-                            });
-                          },
                         ),
-                        const SizedBox(height: 12),
-
-                        // Community Filter
-                        FutureBuilder<List<CommunityEntity>>(
-                          future: communitiesFuture,
-                          builder: (context, snapshot) {
-                            if (snapshot.connectionState == ConnectionState.waiting) {
-                              return const LinearProgressIndicator(
-                                minHeight: 2,
-                                color: AppTheme.amberAccent,
-                                backgroundColor: AppTheme.surfaceColor,
-                              );
-                            }
-
-                            if (snapshot.hasError) {
-                              return const SizedBox.shrink();
-                            }
-
-                            final communities = snapshot.data ?? [];
-
-                            return DropdownButtonFormField<int?>(
-                              initialValue: selectedCommunityId,
-                              dropdownColor: AppTheme.surfaceColor,
-                              style: const TextStyle(color: Colors.white),
-                              decoration: const InputDecoration(
-                                labelText: 'Filtrar por comunidad temática',
-                                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                              ),
-                              items: [
-                                const DropdownMenuItem<int?>(
-                                  value: null,
-                                  child: Text('Todas las comunidades'),
-                                ),
-                                ...communities.map(
-                                  (community) => DropdownMenuItem<int?>(
-                                    value: community.id,
-                                    child: Text(community.name),
-                                  ),
-                                ),
-                              ],
-                              onChanged: (value) {
-                                setState(() {
-                                  selectedCommunityId = value;
-                                });
-                              },
-                            );
-                          },
+                      ] else
+                        const Text(
+                          'FILTRAR POR COMUNIDADES',
+                          style: TextStyle(
+                            color: AppTheme.textSecondary,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 1,
+                          ),
                         ),
-                      ],
-                    ),
+                      const SizedBox(height: 9),
+                      _CommunityFilters(
+                        future: communitiesFuture,
+                        selectedId: selectedCommunityId,
+                        onSelected: (id) =>
+                            setState(() => selectedCommunityId = id),
+                      ),
+                    ],
                   ),
                 ),
-
-                // Content View (Tab 0: Curated News Feed, Tab 1: Community Critiques Feed)
-                FutureBuilder<List<PostEntity>>(
-                  future: _tabController.index == 0 ? newsFuture : critiquesFuture,
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const SliverFillRemaining(
-                        child: Center(
-                          child: CircularProgressIndicator(color: AppTheme.amberAccent),
-                        ),
-                      );
-                    }
-
-                    if (snapshot.hasError) {
-                      return SliverFillRemaining(
-                        child: Center(
-                          child: Padding(
-                            padding: const EdgeInsets.all(24),
-                            child: Text(
-                              'Error al consultar el servidor:\n${snapshot.error}',
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(color: Color(0xFFEF4444)),
-                            ),
-                          ),
-                        ),
-                      );
-                    }
-
-                    final items = filterItems(snapshot.data ?? []);
-
-                    if (items.isEmpty) {
-                      return SliverFillRemaining(
-                        child: Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                _tabController.index == 0
-                                    ? Icons.newspaper_rounded
-                                    : Icons.rate_review_outlined,
-                                size: 48,
-                                color: AppTheme.textMuted,
-                              ),
-                              const SizedBox(height: 12),
-                              Text(
-                                _tabController.index == 0
-                                    ? 'No hay noticias en esta categoría.'
-                                    : 'Aún no se han publicado críticas en esta comunidad.\n¡Sé el primero en analizar una noticia!',
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(color: AppTheme.textSecondary),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    }
-
-                    return SliverPadding(
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
-                      sliver: SliverGrid(
-                        delegate: SliverChildBuilderDelegate(
-                          (context, index) {
-                            final item = items[index];
-
-                            if (_tabController.index == 0) {
-                              // Tab 0: Curated News Card
-                              return PostCard(
-                                post: item,
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => PostDetailPage(
-                                        post: item,
-                                      ),
-                                    ),
-                                  ).then((_) => refreshData());
-                                },
-                              );
-                            } else {
-                              // Tab 1: Community Critique Card
-                              return CritiqueCard(
-                                critique: item,
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => PostDetailPage(
-                                        post: item,
-                                      ),
-                                    ),
-                                  ).then((_) => refreshData());
-                                },
-                              );
-                            }
-                          },
-                          childCount: items.length,
-                        ),
-                        gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                          maxCrossAxisExtent: 480,
-                          mainAxisExtent: 230,
-                          crossAxisSpacing: 16,
-                          mainAxisSpacing: 16,
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ],
-            ),
+              ),
+              _buildFeed(currentTab),
+              const SliverToBoxAdapter(child: SizedBox(height: 24)),
+            ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildFeed(int currentTab) {
+    return FutureBuilder<List<PostEntity>>(
+      future: currentTab == 0 ? newsFuture : critiquesFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const SliverFillRemaining(
+            hasScrollBody: false,
+            child: Center(
+              child: CircularProgressIndicator(color: AppTheme.amberAccent),
+            ),
+          );
+        }
+        if (snapshot.hasError) {
+          return SliverFillRemaining(
+            hasScrollBody: false,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: FlewsEmptyState(
+                icon: Icons.cloud_off_outlined,
+                message: 'No pudimos consultar el servidor',
+                detail: '${snapshot.error}'.replaceAll('Exception: ', ''),
+              ),
+            ),
+          );
+        }
+
+        final items = filterItems(snapshot.data ?? const <PostEntity>[]);
+        if (items.isEmpty) {
+          return SliverFillRemaining(
+            hasScrollBody: false,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: FlewsEmptyState(
+                icon: currentTab == 0
+                    ? Icons.newspaper_outlined
+                    : Icons.mic_none_rounded,
+                message: currentTab == 0
+                    ? 'No hay noticias con estos filtros.'
+                    : 'Aún no hay críticas en esta comunidad.',
+                detail: currentTab == 1
+                    ? 'Abre una noticia y publica el primer análisis.'
+                    : null,
+              ),
+            ),
+          );
+        }
+
+        return SliverPadding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          sliver: SliverList(
+            delegate: SliverChildBuilderDelegate((context, index) {
+              final postIndex = index ~/ 2;
+              if (index.isOdd) return const SizedBox(height: 16);
+              final item = items[postIndex];
+              void onTap() {
+                Navigator.of(context)
+                    .push<void>(
+                      MaterialPageRoute<void>(
+                        builder: (_) => PostDetailPage(post: item),
+                      ),
+                    )
+                    .then((_) {
+                      if (mounted) refreshData();
+                    });
+              }
+
+              return currentTab == 0
+                  ? PostCard(post: item, onTap: onTap)
+                  : CritiqueCard(critique: item, onTap: onTap);
+            }, childCount: items.length * 2 - 1),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _CommunityFilters extends StatelessWidget {
+  final Future<List<CommunityEntity>> future;
+  final int? selectedId;
+  final ValueChanged<int?> onSelected;
+
+  const _CommunityFilters({
+    required this.future,
+    required this.selectedId,
+    required this.onSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<List<CommunityEntity>>(
+      future: future,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const LinearProgressIndicator(
+            color: AppTheme.amberAccent,
+            backgroundColor: AppTheme.surfaceColor,
+            minHeight: 2,
+          );
+        }
+        if (snapshot.hasError) return const SizedBox.shrink();
+        final communities = snapshot.data ?? const <CommunityEntity>[];
+
+        return SizedBox(
+          height: 34,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: communities.length + 1,
+            separatorBuilder: (_, _) => const SizedBox(width: 8),
+            itemBuilder: (context, index) {
+              final community = index == 0 ? null : communities[index - 1];
+              final id = community?.id;
+              final selected = selectedId == id;
+              final label = community == null
+                  ? 'Todas'
+                  : '${communityEmoji(community.slug, community.name)} ${community.name}';
+
+              return ChoiceChip(
+                selected: selected,
+                onSelected: (_) => onSelected(id),
+                label: Text(label),
+                showCheckmark: false,
+                backgroundColor: AppTheme.surfaceColor,
+                selectedColor: AppTheme.amberAccent,
+                side: const BorderSide(color: AppTheme.borderColor, width: 1.2),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                labelStyle: TextStyle(
+                  color: selected ? AppTheme.darkBackground : AppTheme.bodyText,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+              );
+            },
+          ),
+        );
+      },
     );
   }
 }

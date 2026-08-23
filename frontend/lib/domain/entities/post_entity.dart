@@ -12,6 +12,8 @@ class PostEntity {
   final String? communitySlug;
   final int commentsCount;
   final int reactionsCount;
+  final int? viewerReactionId;
+  final int? viewerSavedPostId;
 
   const PostEntity({
     required this.id,
@@ -27,5 +29,10 @@ class PostEntity {
     this.communitySlug,
     this.commentsCount = 0,
     this.reactionsCount = 0,
+    this.viewerReactionId,
+    this.viewerSavedPostId,
   });
+
+  bool get isLikedByViewer => viewerReactionId != null;
+  bool get isSavedByViewer => viewerSavedPostId != null;
 }

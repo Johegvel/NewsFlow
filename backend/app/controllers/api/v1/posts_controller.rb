@@ -1,15 +1,15 @@
 module Api
   module V1
     class PostsController < ApplicationController
-      before_action :authenticate_user!, only: [:create]
-      
+      before_action :authenticate_user!, only: [ :create ]
+
       def index
         posts = Post.includes(:user, :community)
                     .order(created_at: :desc)
 
-        if params[:filter] == 'news'
+        if params[:filter] == "news"
           posts = posts.where.not(post_type: :critique)
-        elsif params[:filter] == 'critiques' || params[:post_type] == 'critique'
+        elsif params[:filter] == "critiques" || params[:post_type] == "critique"
           posts = posts.where(post_type: :critique)
         elsif params[:post_type].present?
           posts = posts.where(post_type: params[:post_type])
@@ -19,28 +19,32 @@ module Api
           posts = posts.where(community_id: params[:community_id])
         end
 
-        render json: posts.map { |post| post_json(post) }
+        render json: serialize_posts(posts)
       end
 
       def show
         post = Post.includes(:user, :community, :comments, :reactions)
                    .find(params[:id])
 
-        render json: post_json(post).merge(
-          comments_count: post.comments.count,
-          reactions_count: post.reactions.count
-        )
+        render json: serialize_posts([post]).first
       end
 
       def create
-        post = current_user.posts.new(post_params)
+        unless post_params[:post_type].to_s == "critique"
+          render json: {
+            error: "Los usuarios solo pueden publicar críticas y análisis"
+          }, status: :forbidden
+          return
+        end
+
+        post = current_user.posts.new(post_params.merge(post_type: :critique))
 
         if params[:community_id].present?
           post.community_id = params[:community_id]
         end
 
         if post.save
-          render json: post_json(post), status: :created
+          render json: serialize_posts([post]).first, status: :created
         else
           render json: {
             errors: post.errors.full_messages
@@ -60,25 +64,6 @@ module Api
         )
       end
 
-      def post_json(post)
-        {
-          id: post.id,
-          title: post.title,
-          content: post.content,
-          post_type: post.post_type,
-          status: post.status,
-          published_at: post.published_at,
-          user: {
-            id: post.user.id,
-            name: post.user.name
-          },
-          community: {
-            id: post.community.id,
-            name: post.community.name,
-            slug: post.community.slug
-          }
-        }
-      end
     end
   end
 end

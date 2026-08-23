@@ -6,6 +6,7 @@ class Post < ApplicationRecord
   has_many :reactions, dependent: :destroy
   has_many :reports, dependent: :destroy
   has_many :saved_posts, dependent: :destroy
+  has_many :post_reads, dependent: :destroy
 
   enum :post_type, {
     discussion: 0,

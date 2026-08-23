@@ -4,16 +4,23 @@ module Api
       before_action :authenticate_user!
 
       def index
-        saved_posts = current_user.saved_posts.includes(:post)
-        render json: saved_posts
+        saved_posts = current_user.saved_posts
+                                  .includes(post: [:user, :community])
+                                  .order(created_at: :desc)
+        serialized_posts = serialize_posts(saved_posts.map(&:post)).index_by { |post| post[:id] }
+
+        render json: saved_posts.map { |saved_post| saved_post_json(saved_post, serialized_posts) }
       end
 
       def create
         post = Post.find(params[:post_id])
         saved_post = current_user.saved_posts.find_or_initialize_by(post: post)
+        created = saved_post.new_record?
 
         if saved_post.save
-          render json: saved_post, status: :created
+          serialized_posts = serialize_posts([post]).index_by { |item| item[:id] }
+          render json: saved_post_json(saved_post, serialized_posts),
+                 status: created ? :created : :ok
         else
           render json: { errors: saved_post.errors.full_messages },
                 status: :unprocessable_entity
@@ -21,7 +28,7 @@ module Api
       end
 
       def destroy
-        saved_post = SavedPost.find(params[:id])
+        saved_post = current_user.saved_posts.find(params[:id])
         saved_post.destroy!
 
         head :no_content
@@ -29,32 +36,13 @@ module Api
 
       private
 
-      def saved_post_params
-        params.require(:saved_post).permit(:post_id)
-      end
-
-      def saved_post_json(saved_post)
-        post = saved_post.post
-
+      def saved_post_json(saved_post, serialized_posts)
         {
           id: saved_post.id,
+          user_id: saved_post.user_id,
+          post_id: saved_post.post_id,
           created_at: saved_post.created_at,
-          post: {
-            id: post.id,
-            title: post.title,
-            content: post.content,
-            post_type: post.post_type,
-            status: post.status,
-            user: {
-              id: post.user.id,
-              name: post.user.name
-            },
-            community: {
-              id: post.community.id,
-              name: post.community.name,
-              slug: post.community.slug
-            }
-          }
+          post: serialized_posts.fetch(saved_post.post_id)
         }
       end
     end

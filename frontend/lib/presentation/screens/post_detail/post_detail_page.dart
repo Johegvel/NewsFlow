@@ -1,44 +1,83 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/post_formatters.dart';
+import '../../../core/widgets/flews_bottom_navigation.dart';
+import '../../../core/widgets/flews_empty_state.dart';
 import '../../../core/widgets/flews_notification.dart';
 import '../../../core/widgets/responsive_container.dart';
 import '../../../domain/entities/comment_entity.dart';
 import '../../../domain/entities/post_entity.dart';
 import '../../../service_locator.dart';
 import '../create_critique/create_critique_page.dart';
+import '../home/home_page.dart';
+import '../profile/profile_page.dart';
+import '../saved_posts/saved_posts_page.dart';
 
 class PostDetailPage extends StatefulWidget {
   final PostEntity post;
 
-  const PostDetailPage({
-    super.key,
-    required this.post,
-  });
+  const PostDetailPage({super.key, required this.post});
 
   @override
   State<PostDetailPage> createState() => _PostDetailPageState();
 }
 
 class _PostDetailPageState extends State<PostDetailPage> {
-  final TextEditingController commentController = TextEditingController();
-
+  final commentController = TextEditingController();
   late Future<List<CommentEntity>> commentsFuture;
-
   bool sendingComment = false;
   bool reacting = false;
   bool savingPost = false;
+  late PostEntity post;
+  int? reactionId;
+  int? savedPostId;
+  int reactionsCount = 0;
 
   int get currentUserId => ServiceLocator.authRepository.currentUser?.id ?? 1;
+  bool get isCritique => post.postType == 'critique';
+  bool get isLiked => reactionId != null;
+  bool get isSaved => savedPostId != null;
 
   @override
   void initState() {
     super.initState();
+    post = widget.post;
+    reactionId = post.viewerReactionId;
+    savedPostId = post.viewerSavedPostId;
+    reactionsCount = post.reactionsCount;
     loadComments();
+    unawaited(_refreshViewerState());
+    if (!isCritique) unawaited(_registerRead());
   }
 
   void loadComments() {
-    commentsFuture = ServiceLocator.postRepository.fetchComments(widget.post.id);
+    commentsFuture = ServiceLocator.postRepository.fetchComments(post.id);
+  }
+
+  Future<void> _refreshViewerState() async {
+    try {
+      final refreshed = await ServiceLocator.postRepository.fetchPost(post.id);
+      if (!mounted) return;
+      setState(() {
+        post = refreshed;
+        reactionId = refreshed.viewerReactionId;
+        savedPostId = refreshed.viewerSavedPostId;
+        reactionsCount = refreshed.reactionsCount;
+      });
+    } catch (_) {
+      // La publicación recibida permite mantener la pantalla utilizable sin red.
+    }
+  }
+
+  Future<void> _registerRead() async {
+    try {
+      await ServiceLocator.postRepository.markPostRead(post.id);
+    } catch (_) {
+      // Registrar la lectura no debe impedir que el usuario lea el artículo.
+    }
   }
 
   @override
@@ -49,154 +88,175 @@ class _PostDetailPageState extends State<PostDetailPage> {
 
   Future<void> sendComment() async {
     final text = commentController.text.trim();
-
     if (text.isEmpty) {
       FlewsNotificationHelper.show(
         context: context,
         title: 'Comentario vacío',
-        message: 'Por favor escribe un mensaje antes de publicar.',
+        message: 'Escribe un mensaje antes de publicar.',
         actionIcon: Icons.warning_amber_rounded,
       );
       return;
     }
-
-    setState(() {
-      sendingComment = true;
-    });
-
+    setState(() => sendingComment = true);
     try {
       await ServiceLocator.postRepository.createComment(
-        postId: widget.post.id,
+        postId: post.id,
         content: text,
         userId: currentUserId,
       );
-
+      if (!mounted) return;
       commentController.clear();
-
-      setState(() {
-        loadComments();
-      });
-
-      if (mounted) {
-        FlewsNotificationHelper.show(
-          context: context,
-          title: 'Comentario publicado',
-          message: 'Tu opinión ha sido añadida a la conversación.',
-          actionIcon: Icons.chat_bubble_outline_rounded,
-        );
-      }
+      setState(loadComments);
+      FlewsNotificationHelper.show(
+        context: context,
+        title: 'Comentario publicado',
+        message: 'Tu perspectiva se añadió a la conversación.',
+        actionIcon: Icons.chat_bubble_outline_rounded,
+      );
     } catch (error) {
       if (mounted) {
         FlewsNotificationHelper.show(
           context: context,
-          title: 'Error al comentar',
-          message: '$error',
+          title: 'No pudimos comentar',
+          message: '$error'.replaceAll('Exception: ', ''),
         );
       }
     } finally {
-      if (mounted) {
-        setState(() {
-          sendingComment = false;
-        });
-      }
+      if (mounted) setState(() => sendingComment = false);
     }
   }
 
-  Future<void> sendReaction() async {
-    setState(() {
-      reacting = true;
-    });
-
+  Future<void> toggleReaction() async {
+    setState(() => reacting = true);
     try {
-      await ServiceLocator.postRepository.createReaction(
-        postId: widget.post.id,
-        userId: currentUserId,
-      );
-
+      final wasLiked = isLiked;
+      if (wasLiked) {
+        await ServiceLocator.postRepository.deleteReaction(reactionId!);
+      } else {
+        reactionId = await ServiceLocator.postRepository.createReaction(
+          postId: post.id,
+          userId: currentUserId,
+        );
+      }
       if (mounted) {
+        setState(() {
+          if (wasLiked) reactionId = null;
+          reactionsCount = wasLiked
+              ? (reactionsCount - 1).clamp(0, 1 << 31)
+              : reactionsCount + 1;
+        });
         FlewsNotificationHelper.show(
           context: context,
-          title: '¡Reacción registrada!',
-          message: 'Has indicado que esta noticia es relevante.',
-          actionIcon: Icons.thumb_up_alt_rounded,
+          title: wasLiked ? 'Reacción eliminada' : 'Marcada como relevante',
+          message: wasLiked
+              ? 'Ya no aparece marcada como relevante.'
+              : 'Tu reacción ayuda a priorizar información de calidad.',
+          actionIcon: wasLiked
+              ? Icons.thumb_up_off_alt_rounded
+              : Icons.thumb_up_alt_rounded,
         );
       }
     } catch (error) {
       if (mounted) {
         FlewsNotificationHelper.show(
           context: context,
-          title: 'Error de reacción',
-          message: '$error',
+          title: 'No pudimos registrar la reacción',
+          message: '$error'.replaceAll('Exception: ', ''),
         );
       }
     } finally {
+      if (mounted) setState(() => reacting = false);
+    }
+  }
+
+  Future<void> toggleSavedPost() async {
+    setState(() => savingPost = true);
+    try {
+      final wasSaved = isSaved;
+      if (wasSaved) {
+        await ServiceLocator.postRepository.deleteSavedPost(savedPostId!);
+      } else {
+        final saved = await ServiceLocator.postRepository.savePost(
+          postId: post.id,
+          userId: currentUserId,
+        );
+        savedPostId = saved.id;
+      }
       if (mounted) {
         setState(() {
-          reacting = false;
+          if (wasSaved) savedPostId = null;
         });
+        FlewsNotificationHelper.show(
+          context: context,
+          title: wasSaved ? 'Eliminada de guardados' : 'Noticia guardada',
+          message: wasSaved
+              ? 'La publicación salió de tu lista de lectura.'
+              : 'Ya está disponible en tu lista de lectura.',
+          actionIcon: wasSaved
+              ? Icons.bookmark_remove_rounded
+              : Icons.bookmark_added_rounded,
+        );
       }
+    } catch (error) {
+      if (mounted) {
+        FlewsNotificationHelper.show(
+          context: context,
+          title: 'No pudimos guardarla',
+          message: '$error'.replaceAll('Exception: ', ''),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => savingPost = false);
     }
   }
 
   Future<void> reportPost() async {
     final reasonController = TextEditingController();
-
-    final result = await showDialog<String>(
+    final reason = await showDialog<String>(
       context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          backgroundColor: AppTheme.surfaceColor,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: const BorderSide(color: AppTheme.borderColor),
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: AppTheme.surfaceColor,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: AppTheme.borderColor),
+        ),
+        title: const Text('Reportar publicación'),
+        content: TextField(
+          controller: reasonController,
+          maxLines: 3,
+          decoration: const InputDecoration(
+            hintText: 'Describe el motivo del reporte...',
           ),
-          title: const Row(
-            children: [
-              Icon(Icons.flag_outlined, color: AppTheme.amberAccent),
-              SizedBox(width: 8),
-              Text('Reportar Noticia', style: TextStyle(color: Colors.white)),
-            ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Cancelar'),
           ),
-          content: TextField(
-            controller: reasonController,
-            style: const TextStyle(color: Colors.white),
-            decoration: const InputDecoration(
-              hintText: 'Motivo del reporte (ej. desinformación, spam)...',
-            ),
-            maxLines: 3,
+          FilledButton(
+            onPressed: () {
+              final value = reasonController.text.trim();
+              Navigator.of(dialogContext).pop(value.isEmpty ? null : value);
+            },
+            child: const Text('Enviar'),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Cancelar', style: TextStyle(color: AppTheme.textSecondary)),
-            ),
-            FilledButton(
-              onPressed: () {
-                final reason = reasonController.text.trim();
-                Navigator.pop(dialogContext, reason.isNotEmpty ? reason : null);
-              },
-              style: FilledButton.styleFrom(backgroundColor: AppTheme.amberAccent, foregroundColor: Colors.black),
-              child: const Text('Enviar Reporte'),
-            ),
-          ],
-        );
-      },
+        ],
+      ),
     );
-
-    if (result == null || result.isEmpty) return;
+    reasonController.dispose();
+    if (reason == null || reason.isEmpty) return;
 
     try {
       await ServiceLocator.reportRepository.createReport(
         postId: widget.post.id,
-        reason: result,
+        reason: reason,
         userId: currentUserId,
       );
-
       if (mounted) {
         FlewsNotificationHelper.show(
           context: context,
           title: 'Reporte recibido',
-          message: 'Gracias por colaborar con la calidad informativa de Flews.',
+          message: 'Gracias por ayudarnos a cuidar la calidad de Flews.',
           actionIcon: Icons.verified_user_outlined,
         );
       }
@@ -204,293 +264,488 @@ class _PostDetailPageState extends State<PostDetailPage> {
       if (mounted) {
         FlewsNotificationHelper.show(
           context: context,
-          title: 'Error al reportar',
-          message: '$error',
+          title: 'No pudimos enviar el reporte',
+          message: '$error'.replaceAll('Exception: ', ''),
         );
       }
     }
   }
 
-  Future<void> saveCurrentPost() async {
-    setState(() {
-      savingPost = true;
-    });
-
-    try {
-      await ServiceLocator.postRepository.savePost(
-        postId: widget.post.id,
-        userId: currentUserId,
+  Future<void> _openCritiqueComposer() async {
+    final published = await Navigator.of(context).push<bool>(
+      MaterialPageRoute<bool>(
+        builder: (_) => CreateCritiquePage(quotedPost: widget.post),
+      ),
+    );
+    if (published == true && mounted) {
+      FlewsNotificationHelper.show(
+        context: context,
+        title: '¡Crítica publicada con éxito!',
+        message:
+            'Tu análisis ya está disponible para toda la comunidad en la Tribuna.',
+        actionIcon: Icons.check_circle_rounded,
       );
-
-      if (mounted) {
-        FlewsNotificationHelper.show(
-          context: context,
-          title: 'Noticia guardada',
-          message: 'Artículo añadido a tu lista de lectura guardada.',
-          actionIcon: Icons.bookmark_added_rounded,
-        );
-      }
-    } catch (error) {
-      if (mounted) {
-        FlewsNotificationHelper.show(
-          context: context,
-          title: 'Error al guardar',
-          message: '$error',
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          savingPost = false;
-        });
-      }
     }
+  }
+
+  void _openTopLevel(Widget page) {
+    Navigator.of(context).pushAndRemoveUntil<void>(
+      MaterialPageRoute<void>(builder: (_) => page),
+      (_) => false,
+    );
+  }
+
+  void _onBottomSelected(int index) {
+    if (index == 0) _openTopLevel(const HomePage());
+    if (index == 1) _openTopLevel(const HomePage(initialTab: 1));
+    if (index == 2) _openTopLevel(const SavedPostsPage());
+    if (index == 3) _openTopLevel(const ProfilePage());
   }
 
   @override
   Widget build(BuildContext context) {
-    final post = widget.post;
+    final post = this.post;
+    final postMetadata = parsePostContent(post.content);
+    final critiqueMetadata = parseCritiqueContent(post.content);
+    final body = isCritique ? critiqueMetadata.body : postMetadata.body;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Detalle de Noticia'),
+        leadingWidth: 64,
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 16),
+          child: IconButton(
+            onPressed: () => Navigator.of(context).pop(),
+            tooltip: 'Volver',
+            style: IconButton.styleFrom(
+              backgroundColor: AppTheme.surfaceColor,
+              side: const BorderSide(color: AppTheme.borderColor),
+            ),
+            icon: const Icon(Icons.arrow_back_rounded, size: 20),
+          ),
+        ),
         actions: [
           IconButton(
-            onPressed: savingPost ? null : saveCurrentPost,
+            onPressed: savingPost ? null : toggleSavedPost,
+            tooltip: isSaved
+                ? 'Eliminar de publicaciones guardadas'
+                : 'Guardar publicación',
+            style: IconButton.styleFrom(
+              backgroundColor: isSaved
+                  ? AppTheme.amberAccent.withValues(alpha: 0.14)
+                  : AppTheme.surfaceColor,
+              side: BorderSide(
+                color: isSaved ? AppTheme.amberAccent : AppTheme.borderColor,
+              ),
+            ),
             icon: savingPost
                 ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.amberAccent),
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppTheme.amberAccent,
+                    ),
                   )
-                : const Icon(Icons.bookmark_outline_rounded),
-            tooltip: 'Guardar publicación',
-          ),
-          IconButton(
-            onPressed: reportPost,
-            icon: const Icon(Icons.flag_outlined),
-            tooltip: 'Reportar publicación',
-          ),
-        ],
-      ),
-      body: Center(
-        child: ResponsiveContainer(
-          maxWidth: 850,
-          child: ListView(
-            padding: const EdgeInsets.all(20),
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: AppTheme.surfaceColor,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: AppTheme.borderColor),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.groups_rounded, size: 16, color: AppTheme.amberAccent),
-                        const SizedBox(width: 6),
-                        Text(
-                          post.communityName,
-                          style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 12),
-                        ),
-                      ],
-                    ),
+                : Icon(
+                    isSaved
+                        ? Icons.bookmark_rounded
+                        : Icons.bookmark_border_rounded,
+                    color: isSaved
+                        ? AppTheme.amberAccent
+                        : AppTheme.textPrimary,
+                    size: 20,
                   ),
-                ],
-              ),
-              const SizedBox(height: 14),
-              Text(
-                post.title,
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                      height: 1.3,
+          ),
+          PopupMenuButton<String>(
+            tooltip: 'Más opciones',
+            color: AppTheme.surfaceColor,
+            onSelected: (value) {
+              if (value == 'report') reportPost();
+            },
+            itemBuilder: (_) => const [
+              PopupMenuItem<String>(
+                value: 'report',
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.flag_outlined,
+                      color: AppTheme.destructive,
+                      size: 18,
                     ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                post.content,
-                style: const TextStyle(
-                  color: Color(0xFFCBD5E1),
-                  fontSize: 15,
-                  height: 1.6,
+                    SizedBox(width: 10),
+                    Text('Reportar publicación'),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  const Icon(Icons.person_outline_rounded, size: 14, color: AppTheme.textMuted),
-                  const SizedBox(width: 5),
-                  Text(
-                    'Publicado por ${post.userName}',
-                    style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              Wrap(
-                spacing: 12,
-                runSpacing: 10,
-                children: [
-                  FilledButton.icon(
-                    onPressed: reacting ? null : sendReaction,
-                    icon: reacting
-                        ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
-                        : const Icon(Icons.thumb_up_rounded, size: 18),
-                    label: const Text('Relevante / Me gusta', style: TextStyle(fontWeight: FontWeight.bold)),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppTheme.amberAccent,
-                      foregroundColor: Colors.black,
-                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                  ),
-                  OutlinedButton.icon(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => CreateCritiquePage(quotedPost: post),
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.rate_review_outlined, size: 18, color: AppTheme.amberAccent),
-                    label: const Text('✍️ Escribir Crítica / Análisis', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: AppTheme.amberAccent, width: 1.2),
-                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 28),
-              const Divider(color: AppTheme.borderColor),
-              const SizedBox(height: 16),
-              Text(
-                'Comentarios y Discusión',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-              ),
-              const SizedBox(height: 14),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: commentController,
-                      maxLines: 3,
-                      style: const TextStyle(color: Colors.white),
-                      decoration: const InputDecoration(
-                        hintText: 'Añade una perspectiva constructiva...',
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  FilledButton(
-                    onPressed: sendingComment ? null : sendComment,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppTheme.amberAccent,
-                      foregroundColor: Colors.black,
-                      padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    child: sendingComment
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
-                          )
-                        : const Text('Enviar', style: TextStyle(fontWeight: FontWeight.bold)),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              FutureBuilder<List<CommentEntity>>(
-                future: commentsFuture,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(
-                      child: CircularProgressIndicator(color: AppTheme.amberAccent),
-                    );
-                  }
-
-                  if (snapshot.hasError) {
-                    return Center(
-                      child: Text('Error: ${snapshot.error}', style: const TextStyle(color: Color(0xFFEF4444))),
-                    );
-                  }
-
-                  final comments = snapshot.data ?? [];
-
-                  if (comments.isEmpty) {
-                    return const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 24),
-                      child: Center(
-                        child: Text(
-                          'Aún no hay comentarios. ¡Sé el primero en aportar!',
-                          style: TextStyle(color: AppTheme.textSecondary),
-                        ),
-                      ),
-                    );
-                  }
-
-                  return ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: comments.length,
-                    itemBuilder: (context, index) {
-                      final comment = comments[index];
-
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: AppTheme.surfaceColor,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppTheme.borderColor),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                CircleAvatar(
-                                  radius: 12,
-                                  backgroundColor: AppTheme.amberAccent,
-                                  child: Text(
-                                    comment.userName.substring(0, 1).toUpperCase(),
-                                    style: const TextStyle(color: Colors.black, fontSize: 11, fontWeight: FontWeight.bold),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  comment.userName,
-                                  style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 13),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              comment.content,
-                              style: const TextStyle(color: Color(0xFFCBD5E1), fontSize: 14),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  );
-                },
               ),
             ],
           ),
+          const SizedBox(width: 8),
+        ],
+      ),
+      bottomNavigationBar: FlewsBottomNavigation(
+        selectedIndex: isCritique ? 1 : 0,
+        onSelected: _onBottomSelected,
+      ),
+      body: ResponsiveContainer(
+        maxWidth: 760,
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+          children: [
+            Text(
+              isCritique ? 'ANÁLISIS DE LA COMUNIDAD' : 'ARTÍCULO CURADO',
+              style: const TextStyle(
+                color: AppTheme.amberAccent,
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 1.3,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _MetaBadge(
+                  label:
+                      '${communityEmoji(post.communitySlug, post.communityName)} ${post.communityName}',
+                ),
+                if (isCritique)
+                  _MetaBadge(
+                    label: '⚖️ ${critiqueMetadata.stance}',
+                    amber: true,
+                  ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            Text(
+              post.title,
+              style: AppTheme.editorial(fontSize: 32, height: 1.08),
+            ),
+            const SizedBox(height: 13),
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 13,
+                  backgroundColor: AppTheme.borderColor,
+                  child: Text(
+                    initialsFor(post.userName),
+                    style: const TextStyle(
+                      color: AppTheme.textPrimary,
+                      fontSize: 9,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    post.userName,
+                    style: const TextStyle(
+                      color: AppTheme.bodyText,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                Text(
+                  formatRelativeDate(post.publishedAt),
+                  style: const TextStyle(
+                    color: AppTheme.textSecondary,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 22),
+            Text(
+              body,
+              style: const TextStyle(
+                color: AppTheme.bodyText,
+                fontSize: 15,
+                height: 1.65,
+              ),
+            ),
+            if (!isCritique) ...[
+              const SizedBox(height: 20),
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: AppTheme.surfaceColor,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppTheme.borderColor),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppTheme.amberAccent.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.verified_user_outlined,
+                        color: AppTheme.amberAccent,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'TRANSPARENCIA EDITORIAL',
+                            style: TextStyle(
+                              color: AppTheme.amberAccent,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Fuente: ${postMetadata.source ?? 'Curaduría Flews'}'
+                            '${postMetadata.relevance == null ? '' : ' • Relevancia ${postMetadata.relevance}'}',
+                            style: const TextStyle(
+                              color: AppTheme.textSecondary,
+                              fontSize: 12,
+                              height: 1.35,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            const SizedBox(height: 22),
+            Row(
+              children: [
+                Expanded(
+                  child: FilledButton.icon(
+                    onPressed: reacting ? null : toggleReaction,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: isLiked
+                          ? AppTheme.amberAccent
+                          : AppTheme.surfaceColor,
+                      foregroundColor: isLiked
+                          ? AppTheme.darkBackground
+                          : AppTheme.bodyText,
+                      side: BorderSide(
+                        color: isLiked
+                            ? AppTheme.amberAccent
+                            : AppTheme.borderColor,
+                      ),
+                    ),
+                    icon: reacting
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: AppTheme.darkBackground,
+                            ),
+                          )
+                        : Icon(
+                            isLiked
+                                ? Icons.thumb_up_alt_rounded
+                                : Icons.thumb_up_alt_outlined,
+                            size: 18,
+                          ),
+                    label: Text(
+                      reactionsCount == 0
+                          ? 'Relevante'
+                          : 'Relevante · $reactionsCount',
+                    ),
+                  ),
+                ),
+                if (!isCritique) ...[
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: _openCritiqueComposer,
+                      icon: const Icon(
+                        Icons.edit_note_rounded,
+                        color: AppTheme.amberAccent,
+                        size: 20,
+                      ),
+                      label: const Text('Escribir Crítica'),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: AppTheme.amberAccent),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+            const SizedBox(height: 30),
+            Row(
+              children: [
+                Text(
+                  isCritique ? 'Conversación' : 'Comentarios y discusión',
+                  style: AppTheme.editorial(fontSize: 24),
+                ),
+                const Spacer(),
+                Text(
+                  '${post.commentsCount}',
+                  style: const TextStyle(
+                    color: AppTheme.amberAccent,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: commentController,
+              minLines: 2,
+              maxLines: 4,
+              decoration: InputDecoration(
+                hintText: 'Añade una perspectiva constructiva...',
+                suffixIcon: IconButton(
+                  onPressed: sendingComment ? null : sendComment,
+                  tooltip: 'Publicar comentario',
+                  icon: sendingComment
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: AppTheme.amberAccent,
+                          ),
+                        )
+                      : const Icon(
+                          Icons.send_rounded,
+                          color: AppTheme.amberAccent,
+                        ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 18),
+            FutureBuilder<List<CommentEntity>>(
+              future: commentsFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(
+                    child: CircularProgressIndicator(
+                      color: AppTheme.amberAccent,
+                    ),
+                  );
+                }
+                if (snapshot.hasError) {
+                  return FlewsEmptyState(
+                    icon: Icons.cloud_off_outlined,
+                    message: 'No pudimos cargar la conversación',
+                    detail: '${snapshot.error}'.replaceAll('Exception: ', ''),
+                  );
+                }
+                final comments = snapshot.data ?? const <CommentEntity>[];
+                if (comments.isEmpty) {
+                  return const FlewsEmptyState(
+                    icon: Icons.chat_bubble_outline_rounded,
+                    message: 'Aún no hay comentarios',
+                    detail: 'Sé la primera persona en aportar una perspectiva.',
+                  );
+                }
+                return Column(
+                  children: comments
+                      .map((comment) => _CommentCard(comment: comment))
+                      .toList(),
+                );
+              },
+            ),
+          ],
         ),
+      ),
+    );
+  }
+}
+
+class _MetaBadge extends StatelessWidget {
+  final String label;
+  final bool amber;
+
+  const _MetaBadge({required this.label, this.amber = false});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceColor,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(
+          color: amber ? AppTheme.amberAccent : AppTheme.borderColor,
+        ),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: amber ? AppTheme.amberAccent : AppTheme.bodyText,
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+}
+
+class _CommentCard extends StatelessWidget {
+  final CommentEntity comment;
+
+  const _CommentCard({required this.comment});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppTheme.borderColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 13,
+                backgroundColor: AppTheme.borderColor,
+                child: Text(
+                  initialsFor(comment.userName),
+                  style: const TextStyle(
+                    color: AppTheme.textPrimary,
+                    fontSize: 9,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                comment.userName,
+                style: const TextStyle(
+                  color: AppTheme.textPrimary,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 9),
+          Text(
+            comment.content,
+            style: const TextStyle(
+              color: AppTheme.bodyText,
+              fontSize: 13,
+              height: 1.45,
+            ),
+          ),
+        ],
       ),
     );
   }

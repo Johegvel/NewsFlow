@@ -10,8 +10,14 @@ class PostRepositoryImpl implements PostRepository {
   PostRepositoryImpl({required this.remoteDataSource});
 
   @override
-  Future<List<PostEntity>> fetchPosts({int? communityId, String? filter}) async {
-    return await remoteDataSource.fetchPosts(communityId: communityId, filter: filter);
+  Future<List<PostEntity>> fetchPosts({
+    int? communityId,
+    String? filter,
+  }) async {
+    return await remoteDataSource.fetchPosts(
+      communityId: communityId,
+      filter: filter,
+    );
   }
 
   @override
@@ -55,13 +61,18 @@ class PostRepositoryImpl implements PostRepository {
   }
 
   @override
-  Future<void> createReaction({required int postId, required int userId}) async {
-    await remoteDataSource.createReaction(postId: postId, userId: userId);
+  Future<int> createReaction({required int postId, required int userId}) {
+    return remoteDataSource.createReaction(postId: postId, userId: userId);
   }
 
   @override
-  Future<void> savePost({required int postId, required int userId}) async {
-    await remoteDataSource.savePost(postId: postId, userId: userId);
+  Future<void> deleteReaction(int reactionId) {
+    return remoteDataSource.deleteReaction(reactionId);
+  }
+
+  @override
+  Future<SavedPostEntity> savePost({required int postId, required int userId}) {
+    return remoteDataSource.savePost(postId: postId, userId: userId);
   }
 
   @override
@@ -72,5 +83,10 @@ class PostRepositoryImpl implements PostRepository {
   @override
   Future<void> deleteSavedPost(int savedPostId) async {
     await remoteDataSource.deleteSavedPost(savedPostId);
+  }
+
+  @override
+  Future<int> markPostRead(int postId) {
+    return remoteDataSource.markPostRead(postId);
   }
 }

@@ -26,3 +26,13 @@ flutter:
 
   assets:
     - assets/images/
+
+  fonts:
+    - family: Geist
+      fonts:
+        - asset: assets/fonts/Geist-Variable.ttf
+    - family: InstrumentSerif
+      fonts:
+        - asset: assets/fonts/InstrumentSerif-Regular.ttf
+        - asset: assets/fonts/InstrumentSerif-Italic.ttf
+          style: italic

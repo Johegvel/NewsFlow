@@ -5,43 +5,174 @@ on:
     branches:
       - main
     paths:
-      - 'backend/**'
-      - '.github/workflows/deploy_backend.yml'
+      - "backend/**"
+      - ".github/workflows/deploy_backend.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: flews-backend-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
 
 env:
-  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID || 'flews-backend-prod' }}
   REGION: ${{ secrets.GCP_REGION || 'us-central1' }}
   SERVICE_NAME: flews-backend
-  IMAGE_NAME: gcr.io/flews-backend-prod/flews-backend
 
 jobs:
-  deploy:
-    name: Build & Deploy to Cloud Run
+  test:
+    name: Test Rails
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: backend_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres -d backend_test"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    env:
+      RAILS_ENV: test
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_HOST: 127.0.0.1
+      POSTGRES_PORT: 5432
+
     steps:
-      - name: 📥 Clonar repositorio
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: 🔐 Autenticación en Google Cloud
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4.10"
+          bundler-cache: true
+          working-directory: backend
+
+      - name: Prepare test database
+        working-directory: backend
+        run: bin/rails db:prepare
+
+      - name: Run Rails tests
+        working-directory: backend
+        run: bin/rails test
+
+  deploy:
+    name: Build, migrate and deploy
+    needs: test
+    runs-on: ubuntu-latest
+    environment: production
+
+    env:
+      PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+      GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+      SECRET_KEY_BASE: ${{ secrets.SECRET_KEY_BASE }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      MIGRATION_DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate required secrets
+        shell: bash
+        run: |
+          missing=0
+          for variable in PROJECT_ID GCP_SA_KEY SECRET_KEY_BASE DATABASE_URL MIGRATION_DATABASE_URL; do
+            if [[ -z "${!variable}" ]]; then
+              echo "::error::Missing required GitHub secret: ${variable}"
+              missing=1
+            fi
+          done
+          exit "${missing}"
+
+      - name: Authenticate with Google Cloud
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
-      - name: ⚙️ Configurar Google Cloud SDK
+      - name: Set up Google Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: 🐳 Compilar y subir imagen en Google Cloud Build
+      - name: Prepare private Cloud Run environment files
+        shell: bash
         run: |
-          cd backend
-          gcloud builds submit --tag ${{ env.IMAGE_NAME }}:${{ github.sha }} --tag ${{ env.IMAGE_NAME }}:latest .
+          jq -n '{
+            RAILS_ENV: "production",
+            SECRET_KEY_BASE: env.SECRET_KEY_BASE,
+            DATABASE_URL: env.MIGRATION_DATABASE_URL,
+            RAILS_LOG_TO_STDOUT: "true"
+          }' > "${RUNNER_TEMP}/migration-env.json"
+          jq -n '{
+            RAILS_ENV: "production",
+            SECRET_KEY_BASE: env.SECRET_KEY_BASE,
+            DATABASE_URL: env.DATABASE_URL,
+            RAILS_SERVE_STATIC_FILES: "true",
+            RAILS_LOG_TO_STDOUT: "true",
+            RAILS_MAX_THREADS: "5"
+          }' > "${RUNNER_TEMP}/service-env.json"
+          chmod 600 "${RUNNER_TEMP}/migration-env.json" "${RUNNER_TEMP}/service-env.json"
 
-      - name: 🚀 Desplegar contenedor en Google Cloud Run
+      - name: Build and publish image
+        working-directory: backend
         run: |
-          gcloud run deploy ${{ env.SERVICE_NAME }} \
-            --image ${{ env.IMAGE_NAME }}:${{ github.sha }} \
-            --region ${{ env.REGION }} \
+          gcloud builds submit \
+            --project "${PROJECT_ID}" \
+            --tag "gcr.io/${PROJECT_ID}/${SERVICE_NAME}:${GITHUB_SHA}" \
+            --tag "gcr.io/${PROJECT_ID}/${SERVICE_NAME}:latest" \
+            .
+
+      - name: Configure migration job
+        run: |
+          gcloud run jobs deploy "${SERVICE_NAME}-migrate" \
+            --project "${PROJECT_ID}" \
+            --image "gcr.io/${PROJECT_ID}/${SERVICE_NAME}:${GITHUB_SHA}" \
+            --region "${REGION}" \
+            --command bundle \
+            --args exec,rails,db:migrate \
+            --tasks 1 \
+            --max-retries 0 \
+            --task-timeout 10m \
+            --env-vars-file="${RUNNER_TEMP}/migration-env.json" \
+            --quiet
+
+      - name: Run production migration
+        run: |
+          gcloud run jobs execute "${SERVICE_NAME}-migrate" \
+            --project "${PROJECT_ID}" \
+            --region "${REGION}" \
+            --wait \
+            --quiet
+
+      - name: Deploy Cloud Run service
+        run: |
+          gcloud run deploy "${SERVICE_NAME}" \
+            --project "${PROJECT_ID}" \
+            --image "gcr.io/${PROJECT_ID}/${SERVICE_NAME}:${GITHUB_SHA}" \
+            --region "${REGION}" \
             --allow-unauthenticated \
             --port 8080 \
             --memory 512Mi \
-            --set-env-vars="RAILS_ENV=production,SECRET_KEY_BASE=${{ secrets.SECRET_KEY_BASE || '862442930a612064e7e7bee5304d6f071edfb0e7f8607d52aa36a6e2c03bcb3b1d1d7960d868ab831685612c75587f6cfcf235f9ef11bb73ac33f75d30e19a04' }},DATABASE_URL=${{ secrets.DATABASE_URL || 'postgresql://postgres.qumigrhryjxcypebnljc:af3%3D8%25fB%2A47gR3_@aws-0-us-west-2.pooler.supabase.com:6543/postgres?sslmode=require' }},RAILS_SERVE_STATIC_FILES=true,RAILS_LOG_TO_STDOUT=true,RAILS_MAX_THREADS=5"
+            --env-vars-file="${RUNNER_TEMP}/service-env.json" \
+            --quiet
+
+      - name: Verify production health
+        shell: bash
+        run: |
+          service_url="$(gcloud run services describe "${SERVICE_NAME}" \
+            --project "${PROJECT_ID}" \
+            --region "${REGION}" \
+            --format='value(status.url)')"
+          curl --fail --silent --show-error \
+            --retry 5 \
+            --retry-delay 5 \
+            "${service_url}/up"

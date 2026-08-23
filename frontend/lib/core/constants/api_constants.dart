@@ -1,7 +1,8 @@
 class ApiConstants {
   static const String baseUrl = String.fromEnvironment(
     'API_URL',
-    defaultValue: 'https://flews-backend-388073050451.us-central1.run.app/api/v1',
+    defaultValue:
+        'https://flews-backend-388073050451.us-central1.run.app/api/v1',
   );
 
   // Auth endpoints
@@ -21,4 +22,9 @@ class ApiConstants {
 
   // Saved Posts
   static const String savedPosts = '$baseUrl/saved_posts';
+
+  // Profile and settings
+  static const String profile = '$baseUrl/me/profile';
+  static const String preferences = '$baseUrl/me/preferences';
+  static const String readHistory = '$baseUrl/me/read_history';
 }

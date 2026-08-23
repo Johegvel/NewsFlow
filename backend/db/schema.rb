@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_14_222018) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_23_143000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -40,6 +40,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_14_222018) do
     t.string "slug"
     t.datetime "updated_at", null: false
     t.index ["slug"], name: "index_interests_on_slug", unique: true
+  end
+
+  create_table "post_reads", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "post_id", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["post_id"], name: "index_post_reads_on_post_id"
+    t.index ["user_id", "post_id"], name: "index_post_reads_on_user_id_and_post_id", unique: true
+    t.index ["user_id"], name: "index_post_reads_on_user_id"
   end
 
   create_table "posts", force: :cascade do |t|
@@ -99,6 +109,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_14_222018) do
     t.index ["user_id"], name: "index_user_interests_on_user_id"
   end
 
+  create_table "user_preferences", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.boolean "curation_alerts_enabled", default: true, null: false
+    t.boolean "morning_digest_enabled", default: true, null: false
+    t.boolean "personalization_enabled", default: true, null: false
+    t.boolean "reading_history_enabled", default: true, null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["user_id"], name: "index_user_preferences_on_user_id", unique: true
+  end
+
   create_table "users", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "email"
@@ -110,6 +131,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_14_222018) do
 
   add_foreign_key "comments", "posts"
   add_foreign_key "comments", "users"
+  add_foreign_key "post_reads", "posts"
+  add_foreign_key "post_reads", "users"
   add_foreign_key "posts", "communities"
   add_foreign_key "posts", "users"
   add_foreign_key "reactions", "posts"
@@ -120,4 +143,5 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_14_222018) do
   add_foreign_key "saved_posts", "users"
   add_foreign_key "user_interests", "interests"
   add_foreign_key "user_interests", "users"
+  add_foreign_key "user_preferences", "users"
 end

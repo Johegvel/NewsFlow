@@ -1,6 +1,8 @@
 module Api
   module V1
     class AuthController < ApplicationController
+      before_action :authenticate_user!, only: [:me]
+
       # POST /api/v1/auth/login
       def login
         email = params[:email].to_s.strip.downcase
@@ -14,7 +16,7 @@ module Api
         user = User.find_by('LOWER(email) = ?', email)
 
         if user&.authenticate(password)
-          render json: user_json(user), status: :ok
+          render json: auth_json(user), status: :ok
         else
           render json: { error: 'Credenciales inválidas. Verifica tu correo o contraseña.' }, status: :unauthorized
         end
@@ -45,25 +47,15 @@ module Api
         user = User.new(name: name, email: email, password: password, password_confirmation: password)
 
         if user.save
-          render json: user_json(user), status: :created
+          render json: auth_json(user), status: :created
         else
           render json: { errors: user.errors.full_messages }, status: :unprocessable_entity
         end
       end
 
-      # GET /api/v1/auth/me?user_id=X
+      # GET /api/v1/auth/me
       def me
-        user_id = params[:user_id] || request.headers['X-User-Id']
-
-        if user_id.present?
-          user = User.find_by(id: user_id)
-          if user
-            render json: user_json(user), status: :ok
-            return
-          end
-        end
-
-        render json: { error: 'Sesión no válida o usuario no encontrado' }, status: :unauthorized
+        render json: user_json(current_user), status: :ok
       end
 
       # GET /api/v1/auth/users
@@ -73,6 +65,13 @@ module Api
       end
 
       private
+
+      def auth_json(user)
+        {
+          token: JsonWebToken.encode(user.id),
+          user: user_json(user)
+        }
+      end
 
       def user_json(user)
         {
