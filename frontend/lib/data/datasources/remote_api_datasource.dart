@@ -15,11 +15,12 @@ abstract class RemoteApiDataSource {
   Future<List<UserModel>> fetchAvailableUsers();
   Future<List<CommunityModel>> fetchCommunities();
   Future<List<PostModel>> fetchPosts({int? communityId, String? filter});
+  Future<PostModel> fetchPost(int postId);
   Future<PostModel> createPost({
     required int communityId,
     required String title,
     required String content,
-    required int postType,
+    required String postType,
     required int userId,
   });
   Future<List<CommentModel>> fetchComments(int postId);
@@ -28,33 +29,23 @@ abstract class RemoteApiDataSource {
     required String content,
     required int userId,
   });
-  Future<ReactionModel> toggleReaction({
+  Future<void> createReaction({
     required int postId,
-    required int kind,
-    required int userId,
-  });
-  Future<void> removeReaction(int reactionId);
-  Future<void> reportPost({
-    required int postId,
-    required String reason,
     required int userId,
   });
   Future<void> savePost({
     required int postId,
     required int userId,
   });
-  Future<void> unsavePost({
+  Future<List<SavedPostModel>> fetchSavedPosts(int userId);
+  Future<void> deleteSavedPost(int savedPostId);
+  Future<void> createReport({
     required int postId,
+    required String reason,
     required int userId,
   });
-  Future<List<PostModel>> fetchSavedPosts(int userId);
-  Future<List<InterestModel>> fetchInterests();
-  Future<List<InterestModel>> fetchUserInterests(int userId);
-  Future<List<InterestModel>> updateUserInterests({
-    required int userId,
-    required List<int> interestIds,
-  });
-  Future<List<PostModel>> fetchPersonalizedFeed(int userId);
+  Future<List<ReportModel>> fetchReports();
+  Future<ReportModel> updateReport(int reportId, String status);
 }
 
 class RemoteApiDataSourceImpl implements RemoteApiDataSource {

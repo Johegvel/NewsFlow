@@ -1,5 +1,8 @@
 class ApiConstants {
-  static const String baseUrl = 'http://127.0.0.1:3000/api/v1';
+  static const String baseUrl = String.fromEnvironment(
+    'API_URL',
+    defaultValue: 'https://flews-backend-388073050451.us-central1.run.app/api/v1',
+  );
 
   // Auth endpoints
   static const String login = '$baseUrl/auth/login';
