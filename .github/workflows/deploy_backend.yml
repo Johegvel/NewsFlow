@@ -73,11 +73,7 @@ jobs:
     environment: production
 
     env:
-      PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
       GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
-      SECRET_KEY_BASE: ${{ secrets.SECRET_KEY_BASE }}
-      DATABASE_URL: ${{ secrets.DATABASE_URL }}
-      MIGRATION_DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
 
     steps:
       - name: Checkout repository
@@ -86,16 +82,13 @@ jobs:
       - name: Validate required secrets
         shell: bash
         run: |
-          missing=0
-          for variable in PROJECT_ID GCP_SA_KEY SECRET_KEY_BASE DATABASE_URL MIGRATION_DATABASE_URL; do
-            if [[ -z "${!variable}" ]]; then
-              echo "::error::Missing required GitHub secret: ${variable}"
-              missing=1
-            fi
-          done
-          exit "${missing}"
+          if [[ -z "${GCP_SA_KEY}" ]]; then
+            echo "::error::Missing required GitHub secret: GCP_SA_KEY"
+            exit 1
+          fi
 
       - name: Authenticate with Google Cloud
+        id: auth
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
@@ -103,24 +96,55 @@ jobs:
       - name: Set up Google Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Prepare private Cloud Run environment files
+      - name: Resolve Google Cloud project
+        shell: bash
+        env:
+          AUTH_PROJECT_ID: ${{ steps.auth.outputs.project_id }}
+        run: |
+          if [[ -z "${AUTH_PROJECT_ID}" ]]; then
+            echo "::error::The service account does not define a Google Cloud project."
+            exit 1
+          fi
+          echo "PROJECT_ID=${AUTH_PROJECT_ID}" >> "${GITHUB_ENV}"
+
+      - name: Recover the current private Cloud Run environment
         shell: bash
         run: |
-          jq -n '{
+          umask 077
+          gcloud run services describe "${SERVICE_NAME}" \
+            --project "${PROJECT_ID}" \
+            --region "${REGION}" \
+            --format=json > "${RUNNER_TEMP}/current-service.json"
+
+          jq -e '
+            (.spec.template.spec.containers[0].env // [])
+            | map(select(has("value")) | { key: .name, value: .value })
+            | from_entries
+            | if ((.SECRET_KEY_BASE // "") | length) == 0 then
+                error("SECRET_KEY_BASE is not available in the current Cloud Run service")
+              elif ((.DATABASE_URL // "") | length) == 0 then
+                error("DATABASE_URL is not available in the current Cloud Run service")
+              else
+                . + {
+                  RAILS_ENV: "production",
+                  RAILS_SERVE_STATIC_FILES: "true",
+                  RAILS_LOG_TO_STDOUT: "true",
+                  RAILS_MAX_THREADS: "5"
+                }
+              end
+          ' "${RUNNER_TEMP}/current-service.json" > "${RUNNER_TEMP}/service-env.json"
+
+          jq -e '{
             RAILS_ENV: "production",
-            SECRET_KEY_BASE: env.SECRET_KEY_BASE,
-            DATABASE_URL: env.MIGRATION_DATABASE_URL,
+            SECRET_KEY_BASE: .SECRET_KEY_BASE,
+            DATABASE_URL: .DATABASE_URL,
             RAILS_LOG_TO_STDOUT: "true"
-          }' > "${RUNNER_TEMP}/migration-env.json"
-          jq -n '{
-            RAILS_ENV: "production",
-            SECRET_KEY_BASE: env.SECRET_KEY_BASE,
-            DATABASE_URL: env.DATABASE_URL,
-            RAILS_SERVE_STATIC_FILES: "true",
-            RAILS_LOG_TO_STDOUT: "true",
-            RAILS_MAX_THREADS: "5"
-          }' > "${RUNNER_TEMP}/service-env.json"
-          chmod 600 "${RUNNER_TEMP}/migration-env.json" "${RUNNER_TEMP}/service-env.json"
+          }' "${RUNNER_TEMP}/service-env.json" > "${RUNNER_TEMP}/migration-env.json"
+
+          chmod 600 \
+            "${RUNNER_TEMP}/current-service.json" \
+            "${RUNNER_TEMP}/migration-env.json" \
+            "${RUNNER_TEMP}/service-env.json"
 
       - name: Build and publish image
         working-directory: backend
@@ -176,3 +200,12 @@ jobs:
             --retry 5 \
             --retry-delay 5 \
             "${service_url}/up"
+
+      - name: Remove temporary environment files
+        if: always()
+        shell: bash
+        run: |
+          rm -f \
+            "${RUNNER_TEMP}/current-service.json" \
+            "${RUNNER_TEMP}/migration-env.json" \
+            "${RUNNER_TEMP}/service-env.json"

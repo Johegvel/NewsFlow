@@ -62,7 +62,24 @@ python -c "import secrets; print(secrets.token_hex(64))"
 
 Tienes **dos métodos** para desplegar:
 
-### 🌟 Opción A: GitHub Actions con migración controlada (Recomendada)
+### 🌟 Opción A: GitHub Actions con migración controlada
+
+#### Modo transitorio: reutilizar la configuración vigente
+
+Mientras se crean y rotan los secretos definitivos, el workflow puede desplegar con el
+`GCP_SA_KEY` ya configurado. La cuenta de servicio identifica el proyecto y el runner
+recupera `SECRET_KEY_BASE` y `DATABASE_URL` directamente del servicio Cloud Run vigente.
+Los valores se escriben con permisos privados dentro de `RUNNER_TEMP`, no se imprimen y
+se eliminan al finalizar el job.
+
+Este modo exige que `flews-backend` ya exista y tenga ambas variables configuradas como
+valores de entorno. La misma `DATABASE_URL` se utiliza temporalmente para el servicio y
+para el Job de migración.
+
+> Este mecanismo evita volver a versionar credenciales, pero no reemplaza la rotación
+> pendiente. La configuración recomendada a largo plazo es la siguiente.
+
+#### Configuración definitiva recomendada
 
 Configura estos secretos en **GitHub → Settings → Secrets and variables → Actions**:
 
@@ -75,7 +92,7 @@ Configura estos secretos en **GitHub → Settings → Secrets and variables → 
 | `DATABASE_URL` | URL Pooler de ejecución, normalmente puerto `6543`. |
 | `MIGRATION_DATABASE_URL` | URL directa/Session Pooler, puerto `5432`. |
 
-El workflow [`.github/workflows/deploy_backend.yml`](../.github/workflows/deploy_backend.yml) se activa con cambios en `backend/**` sobre `main` o manualmente mediante `workflow_dispatch`. El orden es:
+El workflow [`.github/workflows/deploy_backend.yml`](../.github/workflows/deploy_backend.yml) se activa con cambios en `backend/**` o en el propio workflow sobre `main`, o manualmente mediante `workflow_dispatch`. El orden es:
 
 1. Levantar PostgreSQL 16 y ejecutar toda la suite Rails.
 2. Construir y publicar la imagen únicamente si las pruebas pasan.

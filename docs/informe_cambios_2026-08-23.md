@@ -377,15 +377,31 @@ La credencial de Supabase que estuvo versionada debe considerarse comprometida y
 
 Las migraciones no se ejecutan al iniciar cada contenedor; esto evita carreras cuando Cloud Run crea varias instancias.
 
-### 6.4. Secretos requeridos
+### 6.4. Credenciales y despliegue transitorio
+
+Para permitir el primer despliegue sin volver a guardar credenciales en GitHub, el
+workflow reutiliza temporalmente la configuración privada del servicio Cloud Run que ya
+está desplegado:
+
+1. se autentica exclusivamente con `GCP_SA_KEY`;
+2. deriva el proyecto desde la cuenta de servicio;
+3. consulta el entorno vigente de `flews-backend` sin imprimirlo;
+4. genera archivos privados dentro de `RUNNER_TEMP` para la migración y el servicio;
+5. elimina esos archivos aunque el job falle.
+
+Este mecanismo requiere que el servicio actual contenga `SECRET_KEY_BASE` y
+`DATABASE_URL` como valores de entorno. Hasta disponer de una conexión de migración
+dedicada, la misma `DATABASE_URL` se utiliza para el Job de Cloud Run.
+
+### 6.5. Secretos definitivos recomendados
 
 | Nombre | Estado conocido |
 | --- | --- |
 | `GCP_SA_KEY` | Configurado en GitHub Actions |
-| `GCP_PROJECT_ID` | Pendiente |
+| `GCP_PROJECT_ID` | Pendiente; el modo transitorio lo deriva de `GCP_SA_KEY` |
 | `GCP_REGION` | Pendiente; existe fallback no sensible `us-central1` |
-| `SECRET_KEY_BASE` | Pendiente; debe ser nuevo |
-| `DATABASE_URL` | Pendiente; Pooler/Transaction, normalmente puerto `6543` |
+| `SECRET_KEY_BASE` | Pendiente; actualmente se recupera desde Cloud Run y debe rotarse |
+| `DATABASE_URL` | Pendiente; actualmente se recupera desde Cloud Run |
 | `MIGRATION_DATABASE_URL` | Pendiente; conexión directa o Session Pooler, puerto `5432` |
 
 No se deben copiar valores reales en archivos del repositorio ni en este informe.
