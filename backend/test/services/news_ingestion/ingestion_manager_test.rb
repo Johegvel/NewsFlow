@@ -51,5 +51,30 @@ module NewsIngestion
       assert_equal "opinion", post.post_type
       assert_includes post.content, "https://example.com/noticia-ingesta"
     end
+
+    test "elimina noticias expiradas mayores a 24 horas" do
+      community = Community.find_or_initialize_by(slug: "tecnologia")
+      community.assign_attributes(name: "Tecnología", topic: "Tecnología")
+      community.save!
+
+      bot = User.find_or_initialize_by(email: IngestionManager::SYSTEM_USER_EMAIL)
+      bot.name = IngestionManager::SYSTEM_USER_NAME
+      bot.password = "Secr3tP@ssw0rd!" if bot.password_digest.blank?
+      bot.save!
+
+      old_post = Post.create!(
+        title: "Noticia vieja del año pasado",
+        content: "Contenido viejo.",
+        published_at: 48.hours.ago,
+        post_type: :opinion,
+        user: bot,
+        community: community
+      )
+
+      manager = TestIngestionManager.new(FakeSource.new([]))
+      manager.run
+
+      assert_nil Post.find_by(id: old_post.id)
+    end
   end
 end

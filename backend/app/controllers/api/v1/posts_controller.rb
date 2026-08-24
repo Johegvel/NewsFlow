@@ -9,10 +9,17 @@ module Api
 
         if params[:filter] == "news"
           posts = posts.where.not(post_type: :critique)
+                       .where("posts.published_at >= ? OR (posts.published_at IS NULL AND posts.created_at >= ?)", 24.hours.ago, 24.hours.ago)
         elsif params[:filter] == "critiques" || params[:post_type] == "critique"
           posts = posts.where(post_type: :critique)
         elsif params[:post_type].present?
           posts = posts.where(post_type: params[:post_type])
+          if params[:post_type].to_s != "critique"
+            posts = posts.where("posts.published_at >= ? OR (posts.published_at IS NULL AND posts.created_at >= ?)", 24.hours.ago, 24.hours.ago)
+          end
+        else
+          # Feed general: críticas de usuarios permanentes, noticias curadas solo de las últimas 24h
+          posts = posts.where("posts.post_type = 'critique' OR posts.published_at >= ? OR (posts.published_at IS NULL AND posts.created_at >= ?)", 24.hours.ago, 24.hours.ago)
         end
 
         if params[:community_id].present?

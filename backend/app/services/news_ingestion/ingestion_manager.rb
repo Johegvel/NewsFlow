@@ -41,6 +41,7 @@ module NewsIngestion
 
     def run
       system_user = find_or_create_system_user
+      deleted_count = purge_expired_news(system_user)
       total_created = 0
       summary = {}
 
@@ -91,6 +92,16 @@ module NewsIngestion
     end
 
     private
+
+    def purge_expired_news(system_user)
+      cutoff = 24.hours.ago
+      expired = Post.where(user: system_user)
+                    .where("published_at < ? OR (published_at IS NULL AND created_at < ?)", cutoff, cutoff)
+      count = expired.count
+      expired.destroy_all
+      Rails.logger.info("[NewsIngestion::IngestionManager] Limpieza de noticias expiradas: #{count} posts eliminados (antigüedad > 24h).")
+      count
+    end
 
     def find_or_create_system_user
       user = User.find_or_initialize_by(email: SYSTEM_USER_EMAIL)
