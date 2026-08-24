@@ -10,7 +10,7 @@ module NewsIngestion
         query = options[:query]
         min_points = options[:min_points] || DEFAULT_MIN_POINTS
         min_comments = options[:min_comments] || DEFAULT_MIN_COMMENTS
-        max_age_days = options[:max_age_days] || 7
+        max_age_days = options[:max_age_days] || 1
         cutoff = max_age_days.days.ago.to_i
 
         query_params = {

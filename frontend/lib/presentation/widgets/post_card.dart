@@ -30,21 +30,28 @@ class PostCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     _Badge(
                       text:
                           '${communityEmoji(post.communitySlug, post.communityName)} ${post.communityName}',
                     ),
-                    const Spacer(),
-                    if (metadata.relevance != null)
-                      Text(
-                        '● ${metadata.relevance}',
-                        style: const TextStyle(
-                          color: AppTheme.amberAccent,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
+                    if (metadata.relevance != null) ...[
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          '● ${metadata.relevance}',
+                          textAlign: TextAlign.end,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: AppTheme.amberAccent,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
+                    ],
                   ],
                 ),
                 const SizedBox(height: 13),

@@ -153,6 +153,7 @@ jobs:
           build_id="$(gcloud builds submit \
             --project "${PROJECT_ID}" \
             --tag "gcr.io/${PROJECT_ID}/${SERVICE_NAME}:${GITHUB_SHA}" \
+            --tag "gcr.io/${PROJECT_ID}/${SERVICE_NAME}:latest" \
             --async \
             --format='value(id)' \
             .)"

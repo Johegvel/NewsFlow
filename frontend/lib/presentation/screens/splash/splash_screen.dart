@@ -58,72 +58,72 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppTheme.darkBackground,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 24, 24, 34),
-          child: Column(
-            children: [
-              const Spacer(flex: 3),
-              ScaleTransition(
-                scale: _pulse,
-                child: Container(
-                  width: 260,
-                  height: 200,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppTheme.amberAccent.withValues(alpha: 0.08),
-                        blurRadius: 64,
-                        spreadRadius: 8,
+        child: Center(
+          child: SizedBox(
+            width: double.infinity,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 34),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const Spacer(flex: 3),
+                  ScaleTransition(
+                    scale: _pulse,
+                    child: Center(
+                      child: Image.asset(
+                        'assets/images/flews_logo.png',
+                        width: 220,
+                        height: 165,
+                        fit: BoxFit.contain,
+                        errorBuilder: (_, _, _) => const Icon(
+                          Icons.newspaper_rounded,
+                          size: 100,
+                          color: AppTheme.amberAccent,
+                        ),
                       ),
-                    ],
-                  ),
-                  child: Image.asset(
-                    'assets/images/flews_logo.png',
-                    width: 220,
-                    height: 165,
-                    fit: BoxFit.contain,
-                    errorBuilder: (_, _, _) => const Icon(
-                      Icons.newspaper_rounded,
-                      size: 100,
-                      color: AppTheme.amberAccent,
                     ),
                   ),
-                ),
+                  const SizedBox(height: 36),
+                  Text(
+                    'MENOS RUIDO, MAYOR\nCALIDAD',
+                    textAlign: TextAlign.center,
+                    style: AppTheme.editorial(fontSize: 32, height: 1.12),
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'INFORMATIVA',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: AppTheme.amberAccent,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 2.5,
+                    ),
+                  ),
+                  const Spacer(flex: 3),
+                  const SizedBox(
+                    width: 32,
+                    height: 32,
+                    child: CircularProgressIndicator(
+                      color: AppTheme.amberAccent,
+                      strokeWidth: 2.5,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Cargando la síntesis diaria...',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: AppTheme.textSecondary,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 36),
-              Text(
-                'MENOS RUIDO, MAYOR\nCALIDAD',
-                textAlign: TextAlign.center,
-                style: AppTheme.editorial(fontSize: 32, height: 1.12),
-              ),
-              const SizedBox(height: 12),
-              const Text(
-                'INFORMATIVA',
-                style: TextStyle(
-                  color: AppTheme.amberAccent,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 2.5,
-                ),
-              ),
-              const Spacer(flex: 3),
-              const SizedBox(
-                width: 36,
-                height: 36,
-                child: CircularProgressIndicator(
-                  color: AppTheme.amberAccent,
-                  strokeWidth: 3,
-                ),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Cargando la síntesis diaria...',
-                style: TextStyle(color: AppTheme.textSecondary, fontSize: 12),
-              ),
-            ],
+            ),
           ),
         ),
       ),

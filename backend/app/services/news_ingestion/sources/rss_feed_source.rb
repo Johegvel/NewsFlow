@@ -50,6 +50,10 @@ module NewsIngestion
                              Time.current
                            end
 
+            parsed_date = Time.zone.parse(published_at.to_s) rescue Time.current
+            # Filtrar noticias de más de 24 horas
+            next if parsed_date && parsed_date < 24.hours.ago
+
             # Limpiar etiquetas HTML básicas de la descripción
             cleaned_content = description.gsub(/<\/?[^>]*>/, '').gsub(/\s+/, ' ').strip
 
@@ -59,7 +63,7 @@ module NewsIngestion
               url: link.strip,
               score: 75,
               comments_count: 0,
-              published_at: published_at,
+              published_at: parsed_date || Time.current,
               source_name: source_label
             }
           end
