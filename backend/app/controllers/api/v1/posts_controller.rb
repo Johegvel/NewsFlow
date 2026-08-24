@@ -19,7 +19,13 @@ module Api
           end
         else
           # Feed general: críticas de usuarios permanentes, noticias curadas solo de las últimas 24h
-          posts = posts.where("posts.post_type = 'critique' OR posts.published_at >= ? OR (posts.published_at IS NULL AND posts.created_at >= ?)", 24.hours.ago, 24.hours.ago)
+          cutoff = 24.hours.ago
+          critique_enum_val = Post.post_types[:critique]
+          posts = posts.where(
+            "posts.post_type = :critique_enum OR posts.published_at >= :cutoff OR (posts.published_at IS NULL AND posts.created_at >= :cutoff)",
+            critique_enum: critique_enum_val,
+            cutoff: cutoff
+          )
         end
 
         if params[:community_id].present?
