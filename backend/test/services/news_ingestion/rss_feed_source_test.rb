@@ -26,7 +26,7 @@ module NewsIngestion
                 <title>Avance científico verificable</title>
                 <link>https://example.com/avance</link>
                 <description><![CDATA[<p>Descripción <strong>sin etiquetas</strong>.</p>]]></description>
-                <pubDate>Sat, 22 Aug 2026 12:00:00 GMT</pubDate>
+                <pubDate>#{1.hour.ago.rfc2822}</pubDate>
               </item>
             </channel>
           </rss>

@@ -31,7 +31,7 @@ module NewsIngestion
           url: "https://example.com/noticia-ingesta",
           score: 180,
           comments_count: 42,
-          published_at: Time.zone.parse("2026-08-22 12:00:00"),
+          published_at: 1.hour.ago,
           source_name: "Fuente de prueba"
         }
       ])
