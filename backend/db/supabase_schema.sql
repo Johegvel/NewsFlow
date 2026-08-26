@@ -140,7 +140,20 @@ CREATE INDEX IF NOT EXISTS index_post_reads_on_user_id ON post_reads(user_id);
 CREATE INDEX IF NOT EXISTS index_user_interests_on_interest_id ON user_interests(interest_id);
 CREATE INDEX IF NOT EXISTS index_user_interests_on_user_id ON user_interests(user_id);
 
--- 14. Semillas Iniciales (Solo Bot del sistema para feeds)
+-- 14. Seguridad de Nivel de Fila (Row Level Security - RLS)
+ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.communities ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.interests ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.user_interests ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.posts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.comments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.reactions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.reports ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.saved_posts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.post_reads ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.user_preferences ENABLE ROW LEVEL SECURITY;
+
+-- 15. Semillas Iniciales (Solo Bot del sistema para feeds)
 INSERT INTO users (name, email, password_digest, created_at, updated_at)
 VALUES 
   ('Flews Bot', 'bot@flews.app', '$2a$12$e0M2l1fV44kP9K9K9K9K9e9K9K9K9K9K9K9K9K9K9K9K9K9K9K9K9', NOW(), NOW())
