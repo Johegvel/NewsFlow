@@ -7,7 +7,8 @@ module Api
         render json: {
           reads_count: current_user.post_reads.count,
           critiques_count: current_user.posts.where(post_type: :critique).count,
-          saved_count: current_user.saved_posts.count
+          saved_count: current_user.saved_posts.count,
+          comments_count: current_user.comments.count
         }
       end
 

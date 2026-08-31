@@ -5,6 +5,7 @@ class ProfileStatsModel extends ProfileStatsEntity {
     required super.readsCount,
     required super.critiquesCount,
     required super.savedCount,
+    required super.commentsCount,
   });
 
   factory ProfileStatsModel.fromJson(Map<String, dynamic> json) {
@@ -12,6 +13,7 @@ class ProfileStatsModel extends ProfileStatsEntity {
       readsCount: _asInt(json['reads_count']),
       critiquesCount: _asInt(json['critiques_count']),
       savedCount: _asInt(json['saved_count']),
+      commentsCount: _asInt(json['comments_count']),
     );
   }
 

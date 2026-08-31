@@ -64,253 +64,298 @@ class _ProfilePageState extends State<ProfilePage> {
     _openTopLevel(const AuthScreen());
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final user = ServiceLocator.authRepository.currentUser;
-    final displayName = user?.name ?? 'Usuario Flews';
+@override
+Widget build(BuildContext context) {
+  final user = ServiceLocator.authRepository.currentUser;
+  final displayName = user?.name ?? 'Usuario Flews';
 
-    return Scaffold(
-      bottomNavigationBar: FlewsBottomNavigation(
-        selectedIndex: 3,
-        onSelected: _onBottomSelected,
-      ),
-      body: SafeArea(
-        bottom: false,
-        child: ResponsiveContainer(
-          maxWidth: 600,
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(20, 22, 20, 28),
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      'Mi Perfil',
-                      style: AppTheme.editorial(fontSize: 32),
+  return Scaffold(
+    bottomNavigationBar: FlewsBottomNavigation(
+      selectedIndex: 3,
+      onSelected: _onBottomSelected,
+    ),
+    body: SafeArea(
+      bottom: false,
+      child: ResponsiveContainer(
+        maxWidth: 600,
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(20, 22, 20, 28),
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Mi Perfil',
+                    style: AppTheme.editorial(fontSize: 32),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppTheme.amberAccent.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Text(
+                    'EDITOR FLEWS',
+                    style: TextStyle(
+                      color: AppTheme.amberAccent,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.7,
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 5,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppTheme.amberAccent.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: const Text(
-                      'EDITOR FLEWS',
-                      style: TextStyle(
-                        color: AppTheme.amberAccent,
-                        fontSize: 10,
+                ),
+              ],
+            ),
+            const SizedBox(height: 22),
+
+            Container(
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: AppTheme.surfaceColor,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: AppTheme.borderColor,
+                  width: 1.5,
+                ),
+              ),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 34,
+                    backgroundColor: AppTheme.amberAccent,
+                    child: Text(
+                      initialsFor(displayName),
+                      style: const TextStyle(
+                        color: AppTheme.darkBackground,
+                        fontSize: 20,
                         fontWeight: FontWeight.w800,
-                        letterSpacing: 0.7,
                       ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          displayName,
+                          style: const TextStyle(
+                            color: AppTheme.textPrimary,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          user?.email ?? '',
+                          style: const TextStyle(
+                            color: AppTheme.textSecondary,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Icon(
+                    Icons.edit_outlined,
+                    color: AppTheme.textSecondary,
+                    size: 19,
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 14),
+
+            FutureBuilder<ProfileStatsEntity>(
+              future: _statsFuture,
+              builder: (context, snapshot) {
+                final stats =
+                    snapshot.data ?? const ProfileStatsEntity();
+
+                final isLoading =
+                    snapshot.connectionState ==
+                    ConnectionState.waiting;
+
+                return Column(
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _StatCard(
+                            value: isLoading
+                                ? '…'
+                                : '${stats.readsCount}',
+                            label: 'Noticias\nleídas',
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: _StatCard(
+                            value: isLoading
+                                ? '…'
+                                : '${stats.critiquesCount}',
+                            label: 'Críticas\npublicadas',
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 10),
+
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _StatCard(
+                            value: isLoading
+                                ? '…'
+                                : '${stats.savedCount}',
+                            label: 'Noticias\nguardadas',
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: _StatCard(
+                            value: isLoading
+                                ? '…'
+                                : '${stats.commentsCount}',
+                            label: 'Comentarios\nescritos',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                );
+              },
+            ),
+
+            const SizedBox(height: 26),
+
+            const Text(
+              'CONFIGURACIÓN',
+              style: TextStyle(
+                color: AppTheme.textSecondary,
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1,
+              ),
+            ),
+
+            const SizedBox(height: 10),
+
+            Material(
+              color: AppTheme.surfaceColor,
+              clipBehavior: Clip.antiAlias,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: const BorderSide(
+                  color: AppTheme.borderColor,
+                  width: 1.5,
+                ),
+              ),
+              child: Column(
+                children: [
+                  _SettingsRow(
+                    emoji: '⚙️',
+                    title: 'Configuración de Cuenta',
+                    subtitle: 'Ajustes de privacidad y datos',
+                    onTap: () =>
+                        _openSettings(const AccountSettingsPage()),
+                  ),
+                  const Divider(height: 1),
+                  _SettingsRow(
+                    emoji: '🔔',
+                    title: 'Preferencias de Notificaciones',
+                    subtitle: 'Alertas matutinas y de curación',
+                    onTap: () => _openSettings(
+                      const NotificationPreferencesPage(),
+                    ),
+                  ),
+                  const Divider(height: 1),
+                  _SettingsRow(
+                    emoji: '🛡️',
+                    title: 'Transparencia Editorial',
+                    subtitle: 'Nuestras fuentes y neutralidad',
+                    onTap: () => _openSettings(
+                      const EditorialTransparencyPage(),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 22),
-              Container(
-                padding: const EdgeInsets.all(18),
-                decoration: BoxDecoration(
-                  color: AppTheme.surfaceColor,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppTheme.borderColor, width: 1.5),
-                ),
-                child: Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 34,
-                      backgroundColor: AppTheme.amberAccent,
-                      child: Text(
-                        initialsFor(displayName),
-                        style: const TextStyle(
-                          color: AppTheme.darkBackground,
-                          fontSize: 20,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            displayName,
-                            style: const TextStyle(
-                              color: AppTheme.textPrimary,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            user?.email ?? '',
-                            style: const TextStyle(
-                              color: AppTheme.textSecondary,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const Icon(
-                      Icons.edit_outlined,
-                      color: AppTheme.textSecondary,
-                      size: 19,
-                    ),
-                  ],
+            ),
+
+            const SizedBox(height: 26),
+
+            const Text(
+              'HERRAMIENTAS EDITORIALES',
+              style: TextStyle(
+                color: AppTheme.textSecondary,
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1,
+              ),
+            ),
+
+            const SizedBox(height: 10),
+
+            Material(
+              color: AppTheme.surfaceColor,
+              clipBehavior: Clip.antiAlias,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: const BorderSide(
+                  color: AppTheme.borderColor,
+                  width: 1.5,
                 ),
               ),
-              const SizedBox(height: 14),
-              FutureBuilder<ProfileStatsEntity>(
-                future: _statsFuture,
-                builder: (context, snapshot) {
-                  final stats = snapshot.data ?? const ProfileStatsEntity();
-                  return Row(
-                    children: [
-                      Expanded(
-                        child: _StatCard(
-                          value:
-                              snapshot.connectionState ==
-                                  ConnectionState.waiting
-                              ? '…'
-                              : '${stats.readsCount}',
-                          label: 'Noticias\nleídas',
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: _StatCard(
-                          value:
-                              snapshot.connectionState ==
-                                  ConnectionState.waiting
-                              ? '…'
-                              : '${stats.critiquesCount}',
-                          label: 'Críticas\npublicadas',
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: _StatCard(
-                          value:
-                              snapshot.connectionState ==
-                                  ConnectionState.waiting
-                              ? '…'
-                              : '${stats.savedCount}',
-                          label: 'Noticias\nguardadas',
-                        ),
-                      ),
-                    ],
-                  );
-                },
+              child: _SettingsRow(
+                emoji: '🧰',
+                title: 'Panel de moderación',
+                subtitle: 'Revisar reportes de la comunidad',
+                onTap: () => Navigator.of(context).push<void>(
+                  MaterialPageRoute<void>(
+                    builder: (_) => const ModerationPage(),
+                  ),
+                ),
               ),
-              const SizedBox(height: 26),
-              const Text(
-                'CONFIGURACIÓN',
+            ),
+
+            const SizedBox(height: 22),
+
+            OutlinedButton.icon(
+              onPressed: _logout,
+              icon: const Icon(
+                Icons.logout_rounded,
+                color: AppTheme.destructive,
+              ),
+              label: const Text(
+                'Cerrar Sesión',
                 style: TextStyle(
-                  color: AppTheme.textSecondary,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1,
-                ),
-              ),
-              const SizedBox(height: 10),
-              Material(
-                color: AppTheme.surfaceColor,
-                clipBehavior: Clip.antiAlias,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  side: const BorderSide(
-                    color: AppTheme.borderColor,
-                    width: 1.5,
-                  ),
-                ),
-                child: Column(
-                  children: [
-                    _SettingsRow(
-                      emoji: '⚙️',
-                      title: 'Configuración de Cuenta',
-                      subtitle: 'Ajustes de privacidad y datos',
-                      onTap: () => _openSettings(const AccountSettingsPage()),
-                    ),
-                    const Divider(height: 1),
-                    _SettingsRow(
-                      emoji: '🔔',
-                      title: 'Preferencias de Notificaciones',
-                      subtitle: 'Alertas matutinas y de curación',
-                      onTap: () =>
-                          _openSettings(const NotificationPreferencesPage()),
-                    ),
-                    const Divider(height: 1),
-                    _SettingsRow(
-                      emoji: '🛡️',
-                      title: 'Transparencia Editorial',
-                      subtitle: 'Nuestras fuentes y neutralidad',
-                      onTap: () =>
-                          _openSettings(const EditorialTransparencyPage()),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 26),
-              const Text(
-                'HERRAMIENTAS EDITORIALES',
-                style: TextStyle(
-                  color: AppTheme.textSecondary,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1,
-                ),
-              ),
-              const SizedBox(height: 10),
-              Material(
-                color: AppTheme.surfaceColor,
-                clipBehavior: Clip.antiAlias,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  side: const BorderSide(
-                    color: AppTheme.borderColor,
-                    width: 1.5,
-                  ),
-                ),
-                child: _SettingsRow(
-                  emoji: '🧰',
-                  title: 'Panel de moderación',
-                  subtitle: 'Revisar reportes de la comunidad',
-                  onTap: () => Navigator.of(context).push<void>(
-                    MaterialPageRoute<void>(
-                      builder: (_) => const ModerationPage(),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 22),
-              OutlinedButton.icon(
-                onPressed: _logout,
-                icon: const Icon(
-                  Icons.logout_rounded,
                   color: AppTheme.destructive,
                 ),
-                label: const Text(
-                  'Cerrar Sesión',
-                  style: TextStyle(color: AppTheme.destructive),
+              ),
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(
+                  color: AppTheme.destructive,
                 ),
-                style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: AppTheme.destructive),
-                  padding: const EdgeInsets.symmetric(vertical: 15),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 15,
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
-    );
-  }
+    ),
+  );
 }
+}
+
 
 class _StatCard extends StatelessWidget {
   final String value;
