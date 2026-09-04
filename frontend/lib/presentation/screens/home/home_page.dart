@@ -33,6 +33,7 @@ class _HomePageState extends State<HomePage>
 
   String searchText = '';
   int? selectedCommunityId;
+  String sortOption = 'recent'; // 'recent', 'score_desc', 'score_asc'
 
   @override
   void initState() {
@@ -54,11 +55,23 @@ class _HomePageState extends State<HomePage>
   }
 
   void loadData() {
-    newsFuture = ServiceLocator.postRepository.fetchPosts(filter: 'news');
+    newsFuture = ServiceLocator.postRepository.fetchPosts(
+      filter: 'news',
+      sortBy: sortOption,
+    );
     critiquesFuture = ServiceLocator.postRepository.fetchPosts(
       filter: 'critiques',
+      sortBy: sortOption,
     );
     communitiesFuture = ServiceLocator.communityRepository.fetchCommunities();
+  }
+
+  void _updateSortOption(String option) {
+    if (sortOption == option) return;
+    setState(() {
+      sortOption = option;
+      loadData();
+    });
   }
 
   Future<void> refreshData() async {
@@ -78,7 +91,7 @@ class _HomePageState extends State<HomePage>
 
   List<PostEntity> filterItems(List<PostEntity> items) {
     final query = searchText.trim().toLowerCase();
-    return items.where((item) {
+    final filtered = items.where((item) {
       final matchesSearch =
           query.isEmpty ||
           item.title.toLowerCase().contains(query) ||
@@ -88,6 +101,20 @@ class _HomePageState extends State<HomePage>
           item.communityId == selectedCommunityId;
       return matchesSearch && matchesCommunity;
     }).toList();
+
+    if (sortOption == 'score_desc') {
+      filtered.sort((a, b) => b.reactionsCount.compareTo(a.reactionsCount));
+    } else if (sortOption == 'score_asc') {
+      filtered.sort((a, b) => a.reactionsCount.compareTo(b.reactionsCount));
+    } else {
+      filtered.sort((a, b) {
+        final dateA = a.publishedAt ?? '';
+        final dateB = b.publishedAt ?? '';
+        return dateB.compareTo(dateA);
+      });
+    }
+
+    return filtered;
   }
 
   void _selectSection(int index) {
@@ -192,6 +219,63 @@ class _HomePageState extends State<HomePage>
                           ),
                           onChanged: (value) =>
                               setState(() => searchText = value),
+                        ),
+                        const SizedBox(height: 14),
+                        Row(
+                          children: [
+                            const Text(
+                              'ORDENAR POR',
+                              style: TextStyle(
+                                color: AppTheme.textSecondary,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 1,
+                              ),
+                            ),
+                            const Spacer(),
+                            if (sortOption != 'recent')
+                              GestureDetector(
+                                onTap: () => _updateSortOption('recent'),
+                                child: const Text(
+                                  'Restablecer',
+                                  style: TextStyle(
+                                    color: AppTheme.amberAccent,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: [
+                              _SortChip(
+                                label: 'Más recientes',
+                                icon: Icons.access_time_rounded,
+                                isSelected: sortOption == 'recent',
+                                onSelected: () => _updateSortOption('recent'),
+                              ),
+                              const SizedBox(width: 8),
+                              _SortChip(
+                                label: 'Mejor puntuadas',
+                                icon: Icons.star_rounded,
+                                isSelected: sortOption == 'score_desc',
+                                onSelected: () =>
+                                    _updateSortOption('score_desc'),
+                              ),
+                              const SizedBox(width: 8),
+                              _SortChip(
+                                label: 'Menor puntuadas',
+                                icon: Icons.trending_down_rounded,
+                                isSelected: sortOption == 'score_asc',
+                                onSelected: () =>
+                                    _updateSortOption('score_asc'),
+                              ),
+                            ],
+                          ),
                         ),
                         const SizedBox(height: 14),
                         const Text(
@@ -372,6 +456,63 @@ class _CommunityFilters extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+class _SortChip extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final bool isSelected;
+  final VoidCallback onSelected;
+
+  const _SortChip({
+    required this.label,
+    required this.icon,
+    required this.isSelected,
+    required this.onSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onSelected,
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? AppTheme.amberAccent.withValues(alpha: 0.15)
+                : AppTheme.surfaceColor,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isSelected ? AppTheme.amberAccent : AppTheme.borderColor,
+              width: 1.2,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                size: 14,
+                color: isSelected ? AppTheme.amberAccent : AppTheme.textSecondary,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  color: isSelected ? AppTheme.amberAccent : AppTheme.bodyText,
+                  fontSize: 12,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

@@ -11,27 +11,33 @@ module NewsIngestion
 
     COMMUNITY_CONFIG = {
       "tecnologia" => [
-        { type: :hacker_news, options: { query: "AI OR software OR tech", min_points: 70, min_comments: 15 } },
-        { type: :rss, options: { feed_url: "https://techcrunch.com/feed/", source_name: "TechCrunch", limit: 8 } }
+        { type: :rss, options: { feed_url: "https://www.xataka.com/feedburner.xml", source_name: "Xataka", limit: 8 } },
+        { type: :rss, options: { feed_url: "https://www.genbeta.com/feedburner.xml", source_name: "Genbeta", limit: 8 } },
+        { type: :rss, options: { feed_url: "https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/section/tecnologia/portada", source_name: "El País Tecnología", limit: 8 } }
       ],
       "ciencia" => [
-        { type: :rss, options: { feed_url: "https://phys.org/rss-feed/", source_name: "Phys.org Science", limit: 8 } }
+        { type: :rss, options: { feed_url: "https://www.agenciasinc.es/rss/view/all", source_name: "Agencia SINC", limit: 8 } },
+        { type: :rss, options: { feed_url: "https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/section/ciencia/portada", source_name: "El País Ciencia", limit: 8 } }
       ],
       "salud" => [
-        { type: :rss, options: { feed_url: "https://www.niehs.nih.gov/news/newsroom/rssfeed/rss_news.xml", source_name: "NIEHS", limit: 8 } }
+        { type: :rss, options: { feed_url: "https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/section/salud-y-bienestar/portada", source_name: "El País Salud", limit: 8 } },
+        { type: :rss, options: { feed_url: "https://cuidateplus.marca.com/rss/portada.xml", source_name: "CuídatePlus", limit: 8 } }
       ],
       "gastronomia" => [
-        { type: :rss, options: { feed_url: "https://www.eater.com/rss/index.xml", source_name: "Eater Gastronomy", limit: 8 } }
+        { type: :rss, options: { feed_url: "https://www.directoalpaladar.com/feedburner.xml", source_name: "Directo al Paladar", limit: 8 } },
+        { type: :rss, options: { feed_url: "https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/section/gastronomia/portada", source_name: "El País Gastronomía", limit: 8 } }
       ],
       "deportes" => [
-        { type: :rss, options: { feed_url: "http://feeds.bbci.co.uk/sport/rss.xml", source_name: "BBC Sport", limit: 8 } }
+        { type: :rss, options: { feed_url: "https://e00-marca.uecdn.es/rss/portada.xml", source_name: "Marca", limit: 8 } },
+        { type: :rss, options: { feed_url: "https://as.com/rss/tags/ultimas_noticias.xml", source_name: "Diario AS", limit: 8 } }
       ],
       "ciberseguridad" => [
-        { type: :rss, options: { feed_url: "https://feeds.feedburner.com/TheHackersNews", source_name: "The Hacker News", limit: 8 } }
+        { type: :rss, options: { feed_url: "https://unaaldia.hispasec.com/feed", source_name: "Una al Día (Hispasec)", limit: 8 } },
+        { type: :rss, options: { feed_url: "https://www.genbeta.com/categoria/seguridad/rss2.xml", source_name: "Genbeta Seguridad", limit: 8 } }
       ],
       "negocios" => [
-        { type: :hacker_news, options: { query: "startup OR business OR market", min_points: 60, min_comments: 12 } },
-        { type: :rss, options: { feed_url: "https://techcrunch.com/category/startups/feed/", source_name: "TechCrunch Startups", limit: 8 } }
+        { type: :rss, options: { feed_url: "https://feeds.elpais.com/mrss-s/pages/ep/site/cincodias.elpais.com/portada", source_name: "Cinco Días", limit: 8 } },
+        { type: :rss, options: { feed_url: "https://www.eleconomista.es/rss/rss-portada.php", source_name: "El Economista", limit: 8 } }
       ]
     }.freeze
 
@@ -95,12 +101,33 @@ module NewsIngestion
 
     def purge_expired_news(system_user)
       cutoff = 24.hours.ago
-      expired = Post.where(user: system_user)
-                    .where("published_at < ? OR (published_at IS NULL AND created_at < ?)", cutoff, cutoff)
-      count = expired.count
-      expired.destroy_all
-      Rails.logger.info("[NewsIngestion::IngestionManager] Limpieza de noticias expiradas: #{count} posts eliminados (antigüedad > 24h).")
-      count
+      saved_post_ids = SavedPost.select(:post_id)
+
+      # 1. Noticias guardadas por usuarios: NO se destruyen para mantenerlas atemporales en su cuenta;
+      # simplemente se ocultan del feed público si aún estuviesen visibles.
+      Post.where(user: system_user)
+          .where(id: saved_post_ids)
+          .where("published_at < ? OR (published_at IS NULL AND created_at < ?)", cutoff, cutoff)
+          .where.not(status: :hidden)
+          .update_all(status: :hidden)
+
+      # 2. Noticias no guardadas por nadie con más de 24 horas: se eliminan
+      expired_news = Post.where(user: system_user)
+                         .where.not(id: saved_post_ids)
+                         .where("published_at < ? OR (published_at IS NULL AND created_at < ?)", cutoff, cutoff)
+      deleted_news_count = expired_news.count
+      expired_news.destroy_all
+
+      # 3. Críticas con más de 24 horas de publicación: expiran al igual que las noticias
+      critique_enum_val = Post.post_types[:critique]
+      expired_critiques = Post.where(post_type: critique_enum_val)
+                              .where("created_at < ?", cutoff)
+      deleted_critiques_count = expired_critiques.count
+      expired_critiques.destroy_all
+
+      total_purged = deleted_news_count + deleted_critiques_count
+      Rails.logger.info("[NewsIngestion::IngestionManager] Limpieza sincronizada: #{deleted_news_count} noticias y #{deleted_critiques_count} críticas eliminadas (antigüedad > 24h).")
+      total_purged
     end
 
     def find_or_create_system_user

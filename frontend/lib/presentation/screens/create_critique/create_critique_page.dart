@@ -62,6 +62,7 @@ $body
 
 ────────────────────────────
 📌 Noticia Citada: "${widget.quotedPost.title}"
+🔗 ID Noticia: ${widget.quotedPost.id}
 🏛️ Comunidad: ${widget.quotedPost.communityName}
 '''
               .trim();

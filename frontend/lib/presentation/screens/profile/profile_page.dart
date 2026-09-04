@@ -53,6 +53,69 @@ class _ProfilePageState extends State<ProfilePage> {
     if (index == 2) _openTopLevel(const SavedPostsPage());
   }
 
+  String? _customDisplayName;
+
+  Future<void> _editProfileName() async {
+    final user = ServiceLocator.authRepository.currentUser;
+    final controller = TextEditingController(
+      text: _customDisplayName ?? user?.name ?? '',
+    );
+    final updated = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: AppTheme.surfaceColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text(
+          'Editar Perfil',
+          style: TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.w700),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Actualiza tu nombre visible en la comunidad Flews:',
+              style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+            ),
+            const SizedBox(height: 14),
+            TextField(
+              controller: controller,
+              textCapitalization: TextCapitalization.words,
+              decoration: const InputDecoration(
+                labelText: 'Nombre o alias',
+                hintText: 'Ej. Juan Pérez',
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Cancelar', style: TextStyle(color: AppTheme.textSecondary)),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(controller.text.trim()),
+            child: const Text('Guardar'),
+          ),
+        ],
+      ),
+    );
+
+    if (updated != null && updated.isNotEmpty && updated != (_customDisplayName ?? user?.name)) {
+      setState(() {
+        _customDisplayName = updated;
+      });
+      if (mounted) {
+        FlewsNotificationHelper.show(
+          context: context,
+          title: 'Perfil actualizado',
+          message: 'Tu nombre ahora se muestra como "$updated".',
+          actionIcon: Icons.check_circle_outline_rounded,
+        );
+      }
+    }
+  }
+
   Future<void> _logout() async {
     await ServiceLocator.authRepository.logout();
     if (!mounted) return;
@@ -67,7 +130,7 @@ class _ProfilePageState extends State<ProfilePage> {
 @override
 Widget build(BuildContext context) {
   final user = ServiceLocator.authRepository.currentUser;
-  final displayName = user?.name ?? 'Usuario Flews';
+  final displayName = _customDisplayName ?? user?.name ?? 'Usuario Flews';
 
   return Scaffold(
     bottomNavigationBar: FlewsBottomNavigation(
@@ -114,7 +177,6 @@ Widget build(BuildContext context) {
             const SizedBox(height: 22),
 
             Container(
-              padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
                 color: AppTheme.surfaceColor,
                 borderRadius: BorderRadius.circular(16),
@@ -123,50 +185,60 @@ Widget build(BuildContext context) {
                   width: 1.5,
                 ),
               ),
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    radius: 34,
-                    backgroundColor: AppTheme.amberAccent,
-                    child: Text(
-                      initialsFor(displayName),
-                      style: const TextStyle(
-                        color: AppTheme.darkBackground,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: _editProfileName,
+                  borderRadius: BorderRadius.circular(16),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
                       children: [
-                        Text(
-                          displayName,
-                          style: const TextStyle(
-                            color: AppTheme.textPrimary,
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
+                        CircleAvatar(
+                          radius: 34,
+                          backgroundColor: AppTheme.amberAccent,
+                          child: Text(
+                            initialsFor(displayName),
+                            style: const TextStyle(
+                              color: AppTheme.darkBackground,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w800,
+                            ),
                           ),
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          user?.email ?? '',
-                          style: const TextStyle(
-                            color: AppTheme.textSecondary,
-                            fontSize: 13,
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                displayName,
+                                style: const TextStyle(
+                                  color: AppTheme.textPrimary,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                user?.email ?? '',
+                                style: const TextStyle(
+                                  color: AppTheme.textSecondary,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ],
                           ),
+                        ),
+                        const Icon(
+                          Icons.edit_outlined,
+                          color: AppTheme.textSecondary,
+                          size: 19,
                         ),
                       ],
                     ),
                   ),
-                  const Icon(
-                    Icons.edit_outlined,
-                    color: AppTheme.textSecondary,
-                    size: 19,
-                  ),
-                ],
+                ),
               ),
             ),
 
@@ -191,7 +263,7 @@ Widget build(BuildContext context) {
                             value: isLoading
                                 ? '…'
                                 : '${stats.readsCount}',
-                            label: 'Noticias\nleídas',
+                            label: 'Noticias\nleídas (24h)',
                           ),
                         ),
                         const SizedBox(width: 10),
@@ -200,7 +272,7 @@ Widget build(BuildContext context) {
                             value: isLoading
                                 ? '…'
                                 : '${stats.critiquesCount}',
-                            label: 'Críticas\npublicadas',
+                            label: 'Críticas\nactivas (24h)',
                           ),
                         ),
                       ],
@@ -224,7 +296,7 @@ Widget build(BuildContext context) {
                             value: isLoading
                                 ? '…'
                                 : '${stats.commentsCount}',
-                            label: 'Comentarios\nescritos',
+                            label: 'Comentarios\nactivos (24h)',
                           ),
                         ),
                       ],

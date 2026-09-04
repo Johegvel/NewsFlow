@@ -7,9 +7,11 @@ module Api
         saved_posts = current_user.saved_posts
                                   .includes(post: [:user, :community])
                                   .order(created_at: :desc)
-        serialized_posts = serialize_posts(saved_posts.map(&:post)).index_by { |post| post[:id] }
+        posts = saved_posts.map(&:post).compact
+        serialized_posts = serialize_posts(posts).index_by { |post| post[:id] }
 
-        render json: saved_posts.map { |saved_post| saved_post_json(saved_post, serialized_posts) }
+        valid_saved_posts = saved_posts.select { |sp| sp.post.present? && serialized_posts.key?(sp.post_id) }
+        render json: valid_saved_posts.map { |saved_post| saved_post_json(saved_post, serialized_posts) }
       end
 
       def create
@@ -23,13 +25,17 @@ module Api
                  status: created ? :created : :ok
         else
           render json: { errors: saved_post.errors.full_messages },
-                status: :unprocessable_entity
+                 status: :unprocessable_entity
         end
       end
 
       def destroy
-        saved_post = current_user.saved_posts.find(params[:id])
-        saved_post.destroy!
+        saved_post = if params[:post_id].present?
+                       current_user.saved_posts.find_by(post_id: params[:post_id])
+                     else
+                       current_user.saved_posts.find_by(id: params[:id])
+                     end
+        saved_post&.destroy!
 
         head :no_content
       end

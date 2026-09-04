@@ -17,12 +17,14 @@ class CritiqueContentMetadata {
   final String stance;
   final String? quotedTitle;
   final String? quotedCommunity;
+  final int? quotedPostId;
 
   const CritiqueContentMetadata({
     required this.body,
     required this.stance,
     this.quotedTitle,
     this.quotedCommunity,
+    this.quotedPostId,
   });
 }
 
@@ -57,6 +59,7 @@ CritiqueContentMetadata parseCritiqueContent(String content) {
   var stance = 'Crítica Constructiva';
   String? quotedTitle;
   String? quotedCommunity;
+  int? quotedPostId;
   final bodyLines = <String>[];
 
   for (final rawLine in content.split('\n')) {
@@ -68,6 +71,8 @@ CritiqueContentMetadata parseCritiqueContent(String content) {
           .replaceFirst('📌 Noticia Citada:', '')
           .trim()
           .replaceAll('"', '');
+    } else if (line.startsWith('🔗 ID Noticia:')) {
+      quotedPostId = int.tryParse(line.replaceFirst('🔗 ID Noticia:', '').trim());
     } else if (line.startsWith('🏛️ Comunidad:')) {
       quotedCommunity = line.replaceFirst('🏛️ Comunidad:', '').trim();
     } else if (line.isNotEmpty && !line.startsWith('─')) {
@@ -80,6 +85,7 @@ CritiqueContentMetadata parseCritiqueContent(String content) {
     stance: stance,
     quotedTitle: quotedTitle,
     quotedCommunity: quotedCommunity,
+    quotedPostId: quotedPostId,
   );
 }
 

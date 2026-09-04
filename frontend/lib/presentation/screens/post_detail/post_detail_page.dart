@@ -174,7 +174,10 @@ class _PostDetailPageState extends State<PostDetailPage> {
     try {
       final wasSaved = isSaved;
       if (wasSaved) {
-        await ServiceLocator.postRepository.deleteSavedPost(savedPostId!);
+        await ServiceLocator.postRepository.deleteSavedPost(
+          savedPostId ?? 0,
+          postId: post.id,
+        );
       } else {
         final saved = await ServiceLocator.postRepository.savePost(
           postId: post.id,
@@ -190,8 +193,8 @@ class _PostDetailPageState extends State<PostDetailPage> {
           context: context,
           title: wasSaved ? 'Eliminada de guardados' : 'Noticia guardada',
           message: wasSaved
-              ? 'La publicación salió de tu lista de lectura.'
-              : 'Ya está disponible en tu lista de lectura.',
+              ? 'La publicación salió de tu lista de guardados.'
+              : 'Publicación guardada de forma atemporal en tu cuenta.',
           actionIcon: wasSaved
               ? Icons.bookmark_remove_rounded
               : Icons.bookmark_added_rounded,
@@ -201,7 +204,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
       if (mounted) {
         FlewsNotificationHelper.show(
           context: context,
-          title: 'No pudimos guardarla',
+          title: 'No pudimos procesar el guardado',
           message: '$error'.replaceAll('Exception: ', ''),
         );
       }
@@ -456,6 +459,126 @@ class _PostDetailPageState extends State<PostDetailPage> {
                 ),
               ],
             ),
+            if (isCritique && critiqueMetadata.quotedTitle != null) ...[
+              const SizedBox(height: 16),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppTheme.surfaceColor,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: AppTheme.amberAccent.withValues(alpha: 0.45),
+                    width: 1.5,
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.newspaper_rounded,
+                          color: AppTheme.amberAccent,
+                          size: 16,
+                        ),
+                        const SizedBox(width: 8),
+                        const Text(
+                          'NOTICIA CITADA EN ESTE ANÁLISIS',
+                          style: TextStyle(
+                            color: AppTheme.amberAccent,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.6,
+                          ),
+                        ),
+                        const Spacer(),
+                        if (critiqueMetadata.quotedCommunity != null)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 7,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppTheme.darkBackground,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              critiqueMetadata.quotedCommunity!,
+                              style: const TextStyle(
+                                color: AppTheme.textSecondary,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      critiqueMetadata.quotedTitle!,
+                      style: AppTheme.editorial(fontSize: 20, height: 1.18),
+                    ),
+                    if (critiqueMetadata.quotedPostId != null) ...[
+                      const SizedBox(height: 12),
+                      const Divider(height: 1),
+                      const SizedBox(height: 10),
+                      InkWell(
+                        onTap: () async {
+                          try {
+                            final quotedPost =
+                                await ServiceLocator.postRepository.fetchPost(
+                              critiqueMetadata.quotedPostId!,
+                            );
+                            if (context.mounted) {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      PostDetailPage(post: quotedPost),
+                                ),
+                              );
+                            }
+                          } catch (_) {
+                            if (context.mounted) {
+                              FlewsNotificationHelper.show(
+                                context: context,
+                                title: 'Noticia no disponible',
+                                message:
+                                    'La noticia original superó el ciclo de 24 horas y expiró.',
+                                actionIcon: Icons.timer_off_outlined,
+                              );
+                            }
+                          }
+                        },
+                        borderRadius: BorderRadius.circular(6),
+                        child: const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 4),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'Leer noticia original completa',
+                                style: TextStyle(
+                                  color: AppTheme.amberAccent,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              SizedBox(width: 4),
+                              Icon(
+                                Icons.arrow_forward_rounded,
+                                color: AppTheme.amberAccent,
+                                size: 15,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 22),
             Text(
               body,

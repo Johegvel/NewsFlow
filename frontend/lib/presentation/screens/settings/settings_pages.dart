@@ -92,6 +92,50 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
     }
   }
 
+  void _showPrivacyPolicy() {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: AppTheme.surfaceColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Privacidad y Términos Flews', style: TextStyle(color: AppTheme.textPrimary)),
+        content: const SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Ciclo de 24 horas y Datos Efímeros',
+                style: TextStyle(color: AppTheme.amberAccent, fontWeight: FontWeight.w700, fontSize: 13),
+              ),
+              SizedBox(height: 6),
+              Text(
+                'Las noticias curadas y las críticas expiran automáticamente tras 24 horas de publicación para mantener la máxima frescura informativa. Tus publicaciones guardadas se conservan de forma atemporal en tu cuenta personal.',
+                style: TextStyle(color: AppTheme.textSecondary, fontSize: 12, height: 1.4),
+              ),
+              SizedBox(height: 12),
+              Text(
+                'Neutralidad y Transparencia',
+                style: TextStyle(color: AppTheme.amberAccent, fontWeight: FontWeight.w700, fontSize: 13),
+              ),
+              SizedBox(height: 6),
+              Text(
+                'Flews preserva las fuentes y enlaces originales de cada medio. No comercializamos ni vendemos tus datos de navegación o lectura.',
+                style: TextStyle(color: AppTheme.textSecondary, fontSize: 12, height: 1.4),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Entendido'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return _SettingsPageShell(
@@ -149,6 +193,25 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
               const SizedBox(height: 18),
               _SettingsCard(
                 children: [
+                  ListTile(
+                    onTap: _showPrivacyPolicy,
+                    leading: const Icon(
+                      Icons.policy_outlined,
+                      color: AppTheme.amberAccent,
+                    ),
+                    title: const Text(
+                      'Términos y Política de Privacidad',
+                      style: TextStyle(
+                        color: AppTheme.textPrimary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    subtitle: const Text(
+                      'Consulta nuestro compromiso con la neutralidad y el ciclo de 24h.',
+                    ),
+                    trailing: const Icon(Icons.chevron_right_rounded),
+                  ),
+                  const Divider(height: 1),
                   ListTile(
                     onTap: _saving ? null : _clearHistory,
                     leading: const Icon(
@@ -228,6 +291,18 @@ class _NotificationPreferencesPageState
     }
   }
 
+  bool _breakingNewsEnabled = true;
+  bool _repliesEnabled = true;
+
+  void _testNotification() {
+    FlewsNotificationHelper.show(
+      context: context,
+      title: '🔔 Alerta de prueba Flews',
+      message: 'Las notificaciones están configuradas y funcionando con éxito.',
+      actionIcon: Icons.notifications_active_rounded,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return _SettingsPageShell(
@@ -280,7 +355,43 @@ class _NotificationPreferencesPageState
                       preferences.copyWith(curationAlertsEnabled: value),
                     ),
                   ),
+                  const Divider(height: 1),
+                  _PreferenceSwitch(
+                    icon: Icons.bolt_rounded,
+                    title: 'Noticias de última hora',
+                    subtitle:
+                        'Avisos de máxima prioridad sobre noticias de alto impacto en las últimas 24h.',
+                    value: _breakingNewsEnabled,
+                    enabled: !_saving,
+                    onChanged: (value) =>
+                        setState(() => _breakingNewsEnabled = value),
+                  ),
+                  const Divider(height: 1),
+                  _PreferenceSwitch(
+                    icon: Icons.forum_outlined,
+                    title: 'Respuestas a tus análisis',
+                    subtitle:
+                        'Notificación cuando otro usuario comente tus críticas en la tribuna.',
+                    value: _repliesEnabled,
+                    enabled: !_saving,
+                    onChanged: (value) =>
+                        setState(() => _repliesEnabled = value),
+                  ),
                 ],
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: _testNotification,
+                  icon: const Icon(Icons.notifications_active_outlined, size: 18),
+                  label: const Text('Enviar notificación de prueba'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppTheme.amberAccent,
+                    side: const BorderSide(color: AppTheme.amberAccent),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                ),
               ),
               const SizedBox(height: 14),
               const Text(

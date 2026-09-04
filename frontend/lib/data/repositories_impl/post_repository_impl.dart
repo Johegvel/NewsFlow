@@ -13,10 +13,12 @@ class PostRepositoryImpl implements PostRepository {
   Future<List<PostEntity>> fetchPosts({
     int? communityId,
     String? filter,
+    String? sortBy,
   }) async {
     return await remoteDataSource.fetchPosts(
       communityId: communityId,
       filter: filter,
+      sortBy: sortBy,
     );
   }
 
@@ -81,8 +83,8 @@ class PostRepositoryImpl implements PostRepository {
   }
 
   @override
-  Future<void> deleteSavedPost(int savedPostId) async {
-    await remoteDataSource.deleteSavedPost(savedPostId);
+  Future<void> deleteSavedPost(int savedPostId, {int? postId}) async {
+    await remoteDataSource.deleteSavedPost(savedPostId, postId: postId);
   }
 
   @override

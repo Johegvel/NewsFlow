@@ -3,7 +3,11 @@ import '../entities/comment_entity.dart';
 import '../entities/saved_post_entity.dart';
 
 abstract class PostRepository {
-  Future<List<PostEntity>> fetchPosts({int? communityId, String? filter});
+  Future<List<PostEntity>> fetchPosts({
+    int? communityId,
+    String? filter,
+    String? sortBy,
+  });
   Future<PostEntity> fetchPost(int postId);
   Future<PostEntity> createPost({
     required int communityId,
@@ -22,6 +26,6 @@ abstract class PostRepository {
   Future<void> deleteReaction(int reactionId);
   Future<SavedPostEntity> savePost({required int postId, required int userId});
   Future<List<SavedPostEntity>> fetchSavedPosts(int userId);
-  Future<void> deleteSavedPost(int savedPostId);
+  Future<void> deleteSavedPost(int savedPostId, {int? postId});
   Future<int> markPostRead(int postId);
 }

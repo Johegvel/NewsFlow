@@ -21,6 +21,7 @@ Rails.application.routes.draw do
         resources :reactions, only: [:index, :create]
         resources :reports, only: [:index, :create]
         resources :saved_posts, only: [:create]
+        delete 'saved_posts', to: 'saved_posts#destroy'
         resources :post_reads, only: [:create]
       end
 
@@ -38,6 +39,7 @@ Rails.application.routes.draw do
       get 'me/interests', to: 'user_interests#show'
       patch 'me/interests', to: 'user_interests#update'
       get 'me/profile', to: 'profile#show'
+      patch 'me/profile', to: 'profile#update'
       delete 'me/read_history', to: 'profile#clear_read_history'
       get 'me/preferences', to: 'preferences#show'
       patch 'me/preferences', to: 'preferences#update'

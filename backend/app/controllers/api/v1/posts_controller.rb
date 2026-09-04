@@ -5,24 +5,28 @@ module Api
 
       def index
         posts = Post.includes(:user, :community)
-                    .order(created_at: :desc)
+                    .where.not(status: :hidden)
+
+        cutoff = 24.hours.ago
+        critique_enum_val = Post.post_types[:critique]
 
         if params[:filter] == "news"
           posts = posts.where.not(post_type: :critique)
-                       .where("posts.published_at >= ? OR (posts.published_at IS NULL AND posts.created_at >= ?)", 24.hours.ago, 24.hours.ago)
+                       .where("posts.published_at >= ? OR (posts.published_at IS NULL AND posts.created_at >= ?)", cutoff, cutoff)
         elsif params[:filter] == "critiques" || params[:post_type] == "critique"
           posts = posts.where(post_type: :critique)
+                       .where("posts.created_at >= ?", cutoff)
         elsif params[:post_type].present?
           posts = posts.where(post_type: params[:post_type])
           if params[:post_type].to_s != "critique"
-            posts = posts.where("posts.published_at >= ? OR (posts.published_at IS NULL AND posts.created_at >= ?)", 24.hours.ago, 24.hours.ago)
+            posts = posts.where("posts.published_at >= ? OR (posts.published_at IS NULL AND posts.created_at >= ?)", cutoff, cutoff)
+          else
+            posts = posts.where("posts.created_at >= ?", cutoff)
           end
         else
-          # Feed general: críticas de usuarios permanentes, noticias curadas solo de las últimas 24h
-          cutoff = 24.hours.ago
-          critique_enum_val = Post.post_types[:critique]
+          # Feed general: tanto críticas como noticias curadas de las últimas 24h
           posts = posts.where(
-            "posts.post_type = :critique_enum OR posts.published_at >= :cutoff OR (posts.published_at IS NULL AND posts.created_at >= :cutoff)",
+            "(posts.post_type = :critique_enum AND posts.created_at >= :cutoff) OR (posts.post_type != :critique_enum AND (posts.published_at >= :cutoff OR (posts.published_at IS NULL AND posts.created_at >= :cutoff)))",
             critique_enum: critique_enum_val,
             cutoff: cutoff
           )
@@ -30,6 +34,14 @@ module Api
 
         if params[:community_id].present?
           posts = posts.where(community_id: params[:community_id])
+        end
+
+        if params[:sort_by] == "score_desc"
+          posts = posts.order(Arel.sql("(SELECT COUNT(*) FROM reactions WHERE reactions.post_id = posts.id) DESC, posts.created_at DESC"))
+        elsif params[:sort_by] == "score_asc"
+          posts = posts.order(Arel.sql("(SELECT COUNT(*) FROM reactions WHERE reactions.post_id = posts.id) ASC, posts.created_at DESC"))
+        else
+          posts = posts.order(created_at: :desc)
         end
 
         render json: serialize_posts(posts)

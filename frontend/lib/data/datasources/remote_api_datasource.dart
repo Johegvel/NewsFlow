@@ -19,7 +19,11 @@ abstract class RemoteApiDataSource {
   Future<AuthSessionModel> register(String name, String email, String password);
   Future<List<UserModel>> fetchAvailableUsers();
   Future<List<CommunityModel>> fetchCommunities();
-  Future<List<PostModel>> fetchPosts({int? communityId, String? filter});
+  Future<List<PostModel>> fetchPosts({
+    int? communityId,
+    String? filter,
+    String? sortBy,
+  });
   Future<PostModel> fetchPost(int postId);
   Future<PostModel> createPost({
     required int communityId,
@@ -38,7 +42,7 @@ abstract class RemoteApiDataSource {
   Future<void> deleteReaction(int reactionId);
   Future<SavedPostModel> savePost({required int postId, required int userId});
   Future<List<SavedPostModel>> fetchSavedPosts(int userId);
-  Future<void> deleteSavedPost(int savedPostId);
+  Future<void> deleteSavedPost(int savedPostId, {int? postId});
   Future<int> markPostRead(int postId);
   Future<ProfileStatsModel> fetchProfileStats();
   Future<UserPreferencesModel> fetchPreferences();
@@ -139,12 +143,17 @@ class RemoteApiDataSourceImpl implements RemoteApiDataSource {
   }
 
   @override
-  Future<List<PostModel>> fetchPosts({int? communityId, String? filter}) async {
+  Future<List<PostModel>> fetchPosts({
+    int? communityId,
+    String? filter,
+    String? sortBy,
+  }) async {
     final queryParams = <String, String>{};
     if (communityId != null) {
       queryParams['community_id'] = communityId.toString();
     }
     if (filter != null) queryParams['filter'] = filter;
+    if (sortBy != null) queryParams['sort_by'] = sortBy;
 
     final baseUri = communityId != null
         ? Uri.parse('${ApiConstants.communities}/$communityId/posts')
@@ -302,12 +311,15 @@ class RemoteApiDataSourceImpl implements RemoteApiDataSource {
   }
 
   @override
-  Future<void> deleteSavedPost(int savedPostId) async {
+  Future<void> deleteSavedPost(int savedPostId, {int? postId}) async {
+    final uri = postId != null
+        ? Uri.parse('${ApiConstants.posts}/$postId/saved_posts')
+        : Uri.parse('${ApiConstants.savedPosts}/$savedPostId');
     final response = await client.delete(
-      Uri.parse('${ApiConstants.savedPosts}/$savedPostId'),
+      uri,
       headers: _headers(authenticated: true),
     );
-    if (response.statusCode != 204) {
+    if (response.statusCode != 204 && response.statusCode != 200) {
       throw Exception('Error al eliminar publicación guardada');
     }
   }
