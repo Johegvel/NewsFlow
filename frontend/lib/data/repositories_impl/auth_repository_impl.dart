@@ -12,7 +12,12 @@ class AuthRepositoryImpl implements AuthRepository {
   AuthRepositoryImpl({
     required this.remoteDataSource,
     required this.localDataSource,
-  });
+  }) {
+    remoteDataSource.setOnSessionRefreshed((newSession) async {
+      await localDataSource.saveSession(newSession);
+      _cachedUser = newSession.user;
+    });
+  }
 
   @override
   UserEntity? get currentUser => _cachedUser;
@@ -21,6 +26,7 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<UserEntity?> loadCurrentSession() async {
     final session = await localDataSource.getStoredSession();
     remoteDataSource.setAuthToken(session?.token);
+    remoteDataSource.setRefreshToken(session?.refreshToken);
     _cachedUser = session?.user;
     return _cachedUser;
   }
@@ -30,6 +36,7 @@ class AuthRepositoryImpl implements AuthRepository {
     final session = await remoteDataSource.login(email, password);
     await localDataSource.saveSession(session);
     remoteDataSource.setAuthToken(session.token);
+    remoteDataSource.setRefreshToken(session.refreshToken);
     _cachedUser = session.user;
     return session.user;
   }
@@ -43,6 +50,7 @@ class AuthRepositoryImpl implements AuthRepository {
     final session = await remoteDataSource.register(name, email, password);
     await localDataSource.saveSession(session);
     remoteDataSource.setAuthToken(session.token);
+    remoteDataSource.setRefreshToken(session.refreshToken);
     _cachedUser = session.user;
     return session.user;
   }
@@ -51,6 +59,7 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<void> logout() async {
     _cachedUser = null;
     remoteDataSource.setAuthToken(null);
+    remoteDataSource.setRefreshToken(null);
     await localDataSource.clearSession();
   }
 

@@ -128,5 +128,71 @@ void main() {
         ),
       );
     });
+
+    test('silent refresh triggers upon 401 and transparently retries operation', () async {
+      var callIndex = 0;
+      var sessionRefreshed = false;
+
+      final client = MockClient((request) async {
+        callIndex++;
+        if (callIndex == 1) {
+          // First attempt to save post: token is expired, returns 401
+          expect(request.method, 'POST');
+          expect(request.url.path, endsWith('/posts/15/saved_posts'));
+          expect(request.headers['authorization'], 'Bearer old-expired-token');
+          return http.Response(jsonEncode({'error': 'Token inválido o ausente'}), 401);
+        } else if (callIndex == 2) {
+          // Interceptor triggers POST /auth/refresh
+          expect(request.method, 'POST');
+          expect(request.url.path, endsWith('/auth/refresh'));
+          final body = jsonDecode(request.body);
+          expect(body['refresh_token'], 'valid-refresh-token');
+          return http.Response(
+            jsonEncode({
+              'token': 'new-fresh-token',
+              'refresh_token': 'rotated-refresh-token',
+              'user': {'id': 7, 'name': 'Usuario', 'email': 'user@example.com'},
+            }),
+            200,
+          );
+        } else {
+          // Retried request with new-fresh-token
+          expect(request.method, 'POST');
+          expect(request.url.path, endsWith('/posts/15/saved_posts'));
+          expect(request.headers['authorization'], 'Bearer new-fresh-token');
+          return http.Response(
+            jsonEncode({
+              'id': 99,
+              'user_id': 7,
+              'post_id': 15,
+              'post': {
+                'id': 15,
+                'title': 'Noticia recuperada',
+                'content': 'Contenido',
+                'user': {'id': 1, 'name': 'Flews'},
+                'community': {'id': 1, 'name': 'Tecnología', 'slug': 'tecnologia'},
+                'viewer_saved_post_id': 99,
+              },
+            }),
+            201,
+          );
+        }
+      });
+
+      final dataSource = RemoteApiDataSourceImpl(client: client)
+        ..setAuthToken('old-expired-token')
+        ..setRefreshToken('valid-refresh-token')
+        ..setOnSessionRefreshed((newSession) async {
+          sessionRefreshed = true;
+          expect(newSession.token, 'new-fresh-token');
+          expect(newSession.refreshToken, 'rotated-refresh-token');
+        });
+
+      final saved = await dataSource.savePost(postId: 15, userId: 7);
+      expect(saved.id, 99);
+      expect(saved.post.title, 'Noticia recuperada');
+      expect(sessionRefreshed, isTrue);
+      expect(callIndex, 3);
+    });
   });
 }

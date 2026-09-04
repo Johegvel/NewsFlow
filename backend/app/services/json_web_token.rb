@@ -1,10 +1,25 @@
 class JsonWebToken
   ALGORITHM = "HS256"
 
-  def self.encode(user_id)
+  def self.encode(user_id, exp: 2.hours.from_now)
     payload = {
       sub: user_id,
-      exp: 24.hours.from_now.to_i
+      exp: exp.to_i,
+      type: "access"
+    }
+
+    JWT.encode(
+      payload,
+      Rails.application.secret_key_base,
+      ALGORITHM
+    )
+  end
+
+  def self.encode_refresh(user_id, exp: 90.days.from_now)
+    payload = {
+      sub: user_id,
+      exp: exp.to_i,
+      type: "refresh"
     }
 
     JWT.encode(

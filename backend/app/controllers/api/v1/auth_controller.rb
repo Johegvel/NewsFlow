@@ -53,6 +53,26 @@ module Api
         end
       end
 
+      # POST /api/v1/auth/refresh
+      def refresh
+        refresh_token = params[:refresh_token].to_s.strip
+        if refresh_token.blank?
+          render json: { error: 'Refresh token requerido' }, status: :bad_request
+          return
+        end
+
+        payload = JsonWebToken.decode(refresh_token)
+        if payload[:type] != 'refresh' || payload[:sub].blank?
+          render json: { error: 'Token de actualización inválido' }, status: :unauthorized
+          return
+        end
+
+        user = User.find(payload[:sub])
+        render json: auth_json(user), status: :ok
+      rescue JWT::DecodeError, ActiveRecord::RecordNotFound
+        render json: { error: 'Sesión expirada o inválida' }, status: :unauthorized
+      end
+
       # GET /api/v1/auth/me
       def me
         render json: user_json(current_user), status: :ok
@@ -69,6 +89,7 @@ module Api
       def auth_json(user)
         {
           token: JsonWebToken.encode(user.id),
+          refresh_token: JsonWebToken.encode_refresh(user.id),
           user: user_json(user)
         }
       end

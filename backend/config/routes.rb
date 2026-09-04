@@ -9,6 +9,7 @@ Rails.application.routes.draw do
 
       post 'auth/login', to: 'auth#login'
       post 'auth/register', to: 'auth#register'
+      post 'auth/refresh', to: 'auth#refresh'
       get 'auth/me', to: 'auth#me'
       get 'auth/users', to: 'auth#users'
 

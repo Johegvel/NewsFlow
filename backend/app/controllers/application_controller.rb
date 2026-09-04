@@ -8,6 +8,7 @@ class ApplicationController < ActionController::API
 
     payload = JsonWebToken.decode(token)
     return @current_user = nil if payload[:sub].blank?
+    return @current_user = nil if payload[:type].present? && payload[:type] != "access"
 
     @current_user = User.find(payload[:sub])
   rescue JWT::DecodeError, ActiveRecord::RecordNotFound

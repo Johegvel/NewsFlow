@@ -10,6 +10,7 @@ import '../../../core/widgets/flews_notification.dart';
 import '../../../core/widgets/responsive_container.dart';
 import '../../../domain/entities/comment_entity.dart';
 import '../../../domain/entities/post_entity.dart';
+import '../../../domain/entities/saved_post_entity.dart';
 import '../../../service_locator.dart';
 import '../create_critique/create_critique_page.dart';
 import '../home/home_page.dart';
@@ -173,42 +174,43 @@ class _PostDetailPageState extends State<PostDetailPage> {
     setState(() => savingPost = true);
     try {
       final wasSaved = isSaved;
-      if (wasSaved) {
-        await ServiceLocator.postRepository.deleteSavedPost(
-          savedPostId ?? 0,
-          postId: post.id,
-        );
-      } else {
-        final saved = await ServiceLocator.postRepository.savePost(
-          postId: post.id,
-          userId: currentUserId,
-        );
-        savedPostId = saved.id;
-      }
-      if (mounted) {
-        setState(() {
-          if (wasSaved) savedPostId = null;
-        });
-        FlewsNotificationHelper.show(
-          context: context,
-          title: wasSaved ? 'Eliminada de guardados' : 'Noticia guardada',
-          message: wasSaved
-              ? 'La publicación salió de tu lista de guardados.'
-              : 'Publicación guardada de forma atemporal en tu cuenta.',
-          actionIcon: wasSaved
-              ? Icons.bookmark_remove_rounded
-              : Icons.bookmark_added_rounded,
-        );
-      }
-    } catch (error) {
-      if (mounted) {
-        FlewsNotificationHelper.show(
-          context: context,
-          title: 'No pudimos procesar el guardado',
-          message: '$error'.replaceAll('Exception: ', ''),
-        );
-      }
-    } finally {
+        SavedPostEntity? saved;
+        if (wasSaved) {
+          await ServiceLocator.postRepository.deleteSavedPost(
+            savedPostId ?? 0,
+            postId: post.id,
+          );
+        } else {
+          saved = await ServiceLocator.postRepository.savePost(
+            postId: post.id,
+            userId: currentUserId,
+          );
+        }
+        if (mounted) {
+          setState(() {
+            savedPostId = wasSaved ? null : saved?.id;
+          });
+          FlewsNotificationHelper.show(
+            context: context,
+            title: wasSaved ? 'Eliminada de guardados' : 'Noticia guardada',
+            message: wasSaved
+                ? 'La publicación salió de tu lista de guardados.'
+                : 'Publicación guardada de forma atemporal en tu cuenta.',
+            actionIcon: wasSaved
+                ? Icons.bookmark_remove_rounded
+                : Icons.bookmark_added_rounded,
+          );
+        }
+      } catch (error) {
+        if (mounted) {
+          final errorMsg = '$error'.replaceAll('Exception: ', '');
+          FlewsNotificationHelper.show(
+            context: context,
+            title: errorMsg.contains('sesión') ? 'Sesión expirada' : 'No pudimos procesar el guardado',
+            message: errorMsg,
+          );
+        }
+      } finally {
       if (mounted) setState(() => savingPost = false);
     }
   }
